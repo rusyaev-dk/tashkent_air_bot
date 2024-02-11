@@ -1,13 +1,10 @@
-from aiogram import types, Router, F
+from aiogram import types, Router, flags
 from aiogram.filters import StateFilter
-from aiogram.fsm.context import FSMContext
-from aiogram.utils.markdown import hcode
 
 echo_router = Router()
 
 
-@echo_router.message(F.text, StateFilter(None))
+@echo_router.message(StateFilter(None))
+@flags.rate_limit(key="default")
 async def bot_echo(message: types.Message):
-    text = ["Echo without any state.", "Message:", message.text]
-
-    await message.answer("\n".join(text))
+    return

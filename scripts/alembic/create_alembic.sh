@@ -1,1 +1,1 @@
-alembic init -t async migrations
+docker-compose exec bot alembic init -t async alembic

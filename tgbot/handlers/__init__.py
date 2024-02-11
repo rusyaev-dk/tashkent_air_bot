@@ -1,16 +1,11 @@
-"""Import all routers and add them to routers_list."""
-from .admin import admin_router
 from .echo import echo_router
-from .simple_menu import menu_router
-from .user import user_router
+from .private import private_routers
+from .errors import errors_router
 
 routers_list = [
-    admin_router,
-    menu_router,
-    user_router,
-    echo_router,  # echo_router must be last
+    *private_routers,
+    echo_router,
+    errors_router
 ]
 
-__all__ = [
-    "routers_list",
-]
+__all__ = ["routers_list"]

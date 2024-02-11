@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 
 from environs import Env
 
@@ -8,7 +8,7 @@ from environs import Env
 class DbConfig:
     """
     Database configuration class.
-    This class holds the settings for the database, such as host, password, port, etc.
+    This class holds the settings_dialog for the database, such as host, password, port, etc.
 
     Attributes
     ----------
@@ -74,7 +74,8 @@ class TgBot:
     """
 
     token: str
-    admin_ids: list[int]
+    admin_ids: List[int]
+    operator_ids: List[int]
     use_redis: bool
 
     @staticmethod
@@ -84,8 +85,10 @@ class TgBot:
         """
         token = env.str("BOT_TOKEN")
         admin_ids = env.list("ADMINS", subcast=int)
+        operator_ids = env.list("OPERATORS", subcast=int)
         use_redis = env.bool("USE_REDIS")
-        return TgBot(token=token, admin_ids=admin_ids, use_redis=use_redis)
+        return TgBot(token=token, admin_ids=admin_ids,
+                     operator_ids=operator_ids, use_redis=use_redis)
 
 
 @dataclass
@@ -135,8 +138,8 @@ class Miscellaneous:
     """
     Miscellaneous configuration class.
 
-    This class holds settings for various other parameters.
-    It merely serves as a placeholder for settings that are not part of other categories.
+    This class holds settings_dialog for various other parameters.
+    It merely serves as a placeholder for settings_dialog that are not part of other categories.
 
     Attributes
     ----------
@@ -148,27 +151,40 @@ class Miscellaneous:
 
 
 @dataclass
+class ApiConfig:
+
+    api_key: str
+
+    @staticmethod
+    def from_env(env: Env):
+        api_key = env.str("API_KEY")
+
+        return ApiConfig(api_key=api_key)
+
+
+@dataclass
 class Config:
     """
     The main configuration class that integrates all the other configuration classes.
 
-    This class holds the other configuration classes, providing a centralized point of access for all settings.
+    This class holds the other configuration classes, providing a centralized point of access for all settings_dialog.
 
     Attributes
     ----------
     tg_bot : TgBot
-        Holds the settings related to the Telegram Bot.
+        Holds the settings_dialog related to the Telegram Bot.
     misc : Miscellaneous
-        Holds the values for miscellaneous settings.
+        Holds the values for miscellaneous settings_dialog.
     db : Optional[DbConfig]
-        Holds the settings specific to the database (default is None).
+        Holds the settings_dialog specific to the database (default is None).
     redis : Optional[RedisConfig]
-        Holds the settings specific to Redis (default is None).
+        Holds the settings_dialog specific to Redis (default is None).
     """
 
     tg_bot: TgBot
     misc: Miscellaneous
-    db: Optional[DbConfig] = None
+    api: ApiConfig
+    db: DbConfig
     redis: Optional[RedisConfig] = None
 
 
@@ -187,7 +203,8 @@ def load_config(path: str = None) -> Config:
 
     return Config(
         tg_bot=TgBot.from_env(env),
-        # db=DbConfig.from_env(env),
-        # redis=RedisConfig.from_env(env),
+        db=DbConfig.from_env(env),
+        redis=RedisConfig.from_env(env),
+        api=ApiConfig.from_env(env),
         misc=Miscellaneous(),
     )
