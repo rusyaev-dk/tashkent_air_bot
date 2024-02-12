@@ -6,6 +6,8 @@ hello =
 
     📑 By using the bot, you automatically accept the { $terms_of_use }.
 
+hello-info = 📌 In the <b>"Settings"</b> section you can change the language and also specify the time at which the bot will send notifications about air quality.
+
 terms-of-use = 📑 By using the bot, you automatically accept the { $terms_of_use }.
 terms-of-use-name = user agreement
 terms-of-use-link = https://telegra.ph/USER-AGREEMENT-FOR-Tashkent-Air-BOT-02-01

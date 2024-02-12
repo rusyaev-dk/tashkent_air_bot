@@ -98,6 +98,12 @@ def setup_scheduling(
         args=(bot, config, session_pool)
     )
 
+    # scheduler.add_job(
+    #     func=aqi_api.update_aqi, trigger='interval',
+    #     seconds=60, replace_existing=True,
+    #     args=(bot, config, session_pool)
+    # )
+
     now = datetime.now()
     first_run_time = None
 

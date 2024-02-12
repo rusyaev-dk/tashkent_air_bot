@@ -163,3 +163,4 @@ async def change_user_language(
     }
     text = l10n.get_text(key="hello", args=args)
     await call.message.answer(text, reply_markup=main_menu_kb(l10n=l10n), disable_web_page_preview=True)
+    await call.message.answer(l10n.get_text(key='hello-info'))

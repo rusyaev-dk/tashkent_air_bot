@@ -6,6 +6,8 @@ hello =
 
     📑 Botdan foydalanish orqali siz { $terms_of_use} avtomatik ravishda qabul qilasiz.
 
+hello-info = 📌 <b>«Sozlamalar»</b> bo'limida siz tilni o'zgartirishingiz, shuningdek, bot havo sifati haqida bildirishnoma yuborish vaqtini belgilashingiz mumkin.
+
 terms-of-use = 📑 Botdan foydalanish orqali siz { $terms_of_use} avtomatik ravishda qabul qilasiz.
 terms-of-use-name = foydalanuvchi shartnomasini
 terms-of-use-link = https://telegra.ph/Toshkent-Air-BOT-UCHUN-FOYDALANUVCHI-SHARTNOMASI-02-01

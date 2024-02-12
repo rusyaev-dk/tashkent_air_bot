@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime as dt
 
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from aiogram import Bot
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -23,7 +23,7 @@ class AQIApi(BaseClient):
         super().__init__(base_url=self.base_url)
 
     @staticmethod
-    def _response_deserialization_with_forecast(
+    def _forecast_response_deserialization(
             response: dict,
     ) -> Tuple[CurrentAQIModel, List[ForecastAQIModel]]:
 
@@ -162,6 +162,71 @@ class AQIApi(BaseClient):
 
         return approximated_forecast_aqi_objects
 
+    @staticmethod
+    async def _responses_relevance_check(
+        responses: List,
+        previous_aqi_relevance_date: dt,
+        config: Config,
+        bot: Bot
+    ) -> bool:
+        outdated_data_count = 0
+        try:
+            for response in responses:
+                response_date = dt.strptime(response[1]["data"]["time"]["s"], '%Y-%m-%d %H:%M:%S')
+                if response_date <= previous_aqi_relevance_date:
+                    outdated_data_count += 1
+        except KeyError as err:
+            await broadcast(bot, users=config.tg_bot.admin_ids,
+                            text=f"Ошибка ключа при проверке актуальности: {err}")
+            return False
+
+        if outdated_data_count == len(responses):
+            return False
+        return True
+
+    async def _responses_processing(
+            self,
+            responses: List,
+            responses_with_forecast: List,
+            config: Config,
+            bot: Bot
+    ) -> Union[Tuple[List, List], None]:
+        current_aqi_objects: List[CurrentAQIModel] = []
+        forecast_aqi_objects: List[List[ForecastAQIModel]] = []
+
+        try:
+            for response in responses_with_forecast:
+                try:
+                    aqi_objects = self._forecast_response_deserialization(
+                        response=response[1],
+                    )
+                    current_aqi_objects.append(aqi_objects[0])
+                    forecast_aqi_objects.append(aqi_objects[1])
+                except OutdatedDataApiError:
+                    continue
+
+            for response in responses:
+                try:
+                    current_aqi_obj = self._response_deserialization(
+                        response=response[1],
+                        o3_value=current_aqi_objects[0].o3_value
+                    )
+                    current_aqi_objects.append(current_aqi_obj)
+                except OutdatedDataApiError:
+                    continue
+        except KeyError as err:
+            await broadcast(bot, users=config.tg_bot.admin_ids,
+                            text=f"Ошибка ключа при десериализации: {err}")
+            return
+        except ForecastValueApiError as err:
+            await broadcast(bot, users=config.tg_bot.admin_ids, text=err)
+            return
+        except IncorrectAqiValueApiError as err:
+            await broadcast(bot, users=config.tg_bot.admin_ids, text=err)
+            return
+
+        return current_aqi_objects, forecast_aqi_objects
+
     async def _get_responses_with_forecast(self) -> List:
         params = {
             "token": self._api_key
@@ -224,67 +289,26 @@ class AQIApi(BaseClient):
                 return
 
             if prev_aqi_exists:
-                # Проверка на актуальность данных:
-                outdated_data_count = 0
-                try:
-                    for response in responses_with_forecast + responses:
-                        response_date = dt.strptime(response[1]["data"]["time"]["s"], '%Y-%m-%d %H:%M:%S')
-                        if response_date <= previous_aqi.relevance_date:
-                            outdated_data_count += 1
-                except KeyError as err:
-                    await broadcast(bot, users=config.tg_bot.admin_ids,
-                                    text=f"Ошибка ключа при проверке актуальности: {err}")
+                is_relevance = await self._responses_relevance_check(
+                    responses=responses_with_forecast+responses,
+                    previous_aqi_relevance_date=previous_aqi.relevance_date,
+                    config=config, bot=bot
+                )
+                if not is_relevance:
                     return
 
-                if outdated_data_count == len(responses_with_forecast) + len(responses):
-                    return
+            processed = await self._responses_processing(
+                responses=responses, responses_with_forecast=responses_with_forecast,
+                config=config, bot=bot
+            )
 
-            current_aqi_objects = []
-            forecast_aqi_objects = []
-
-            try:
-                for response in responses_with_forecast:
-                    try:
-                        aqi_objects = self._response_deserialization_with_forecast(
-                            response=response[1],
-                        )
-                        current_aqi_objects.append(aqi_objects[0])
-                        forecast_aqi_objects.append(aqi_objects[1])
-                    except OutdatedDataApiError:
-                        continue
-
-                for response in responses:
-                    try:
-                        current_aqi_obj = self._response_deserialization(
-                            response=response[1],
-                            o3_value=current_aqi_objects[0].o3_value
-                        )
-                        current_aqi_objects.append(current_aqi_obj)
-                    except OutdatedDataApiError:
-                        continue
-
-            except KeyError as err:
-                await broadcast(bot, users=config.tg_bot.admin_ids,
-                                text=f"Ошибка ключа при десериализации: {err}")
-                return
-            except ForecastValueApiError as err:
-                await broadcast(bot, users=config.tg_bot.admin_ids, text=err)
-                return
-            except IncorrectAqiValueApiError as err:
-                await broadcast(bot, users=config.tg_bot.admin_ids, text=err)
+            if not processed or len(processed[0]) == 0 or len(processed[1]) == 0:
                 return
 
-            if len(current_aqi_objects) == 0 or len(forecast_aqi_objects) == 0:
-                return
+            current_aqi_approx_object = self._current_aqi_approximation(current_aqi_objects=processed[0])
+            forecast_aqi_approx_objects = self._forecast_aqi_approximation(forecast_aqi_lists=processed[1])
 
-            current_aqi_approx_object = self._current_aqi_approximation(current_aqi_objects=current_aqi_objects)
-            forecast_aqi_approx_objects = self._forecast_aqi_approximation(forecast_aqi_lists=forecast_aqi_objects)
-
-            if previous_aqi:
-                request_id = previous_aqi.request_id
-            else:
-                request_id = None
-
+            request_id = previous_aqi.request_id if previous_aqi else None
             current_aqi_approx_object.set_request_id(request_id=request_id)
 
             if prev_aqi_exists:
@@ -293,5 +317,4 @@ class AQIApi(BaseClient):
                 await repo.aqi.add_current_aqi(current_aqi=current_aqi_approx_object)
 
             await repo.aqi.add_forecast_aqi(forecast_objects=forecast_aqi_approx_objects)
-
             await session.commit()
