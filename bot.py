@@ -23,6 +23,7 @@ from tgbot.middlewares.throttling import ThrottlingMiddleware
 from tgbot.misc.constants import SCHEDULER_AQI_INTERVAL_MINUTES, DEFAULT_THROTTLE_TIME
 from tgbot.services import broadcaster
 from tgbot.services.broadcaster import aqi_users_notifying
+from tgbot.services.micro_functions import get_correct_update_run_time
 from tgbot.services.setup_bot_commands import setup_admin_commands
 
 
@@ -92,9 +93,13 @@ def setup_scheduling(
         translator_hub: TranslatorHub,
         session_pool: async_sessionmaker
 ):
+    now = datetime.now()
+    update_run_time = get_correct_update_run_time(now=now)
+
     scheduler.add_job(
         func=aqi_api.update_aqi, trigger='interval',
         minutes=SCHEDULER_AQI_INTERVAL_MINUTES, replace_existing=True,
+        start_date=update_run_time,
         args=(bot, config, session_pool)
     )
 
@@ -104,7 +109,6 @@ def setup_scheduling(
     #     args=(bot, config, session_pool)
     # )
 
-    now = datetime.now()
     first_run_time = None
 
     if 0 < now.minute < 58:
