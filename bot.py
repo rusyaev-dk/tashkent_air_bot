@@ -105,14 +105,14 @@ def setup_scheduling(
 
     # scheduler.add_job(
     #     func=aqi_api.update_aqi, trigger='interval',
-    #     seconds=60, replace_existing=True,
+    #     seconds=5, replace_existing=True,
     #     args=(bot, config, session_pool)
     # )
 
     first_run_time = None
 
-    if 0 < now.minute < 58:
-        first_run_time = now.replace(second=0, microsecond=0, minute=58, hour=now.hour)
+    if 0 < now.minute < 59:
+        first_run_time = now.replace(second=30, microsecond=0, minute=59, hour=now.hour)
 
     scheduler.add_job(
         func=aqi_users_notifying, trigger="interval", hours=1,

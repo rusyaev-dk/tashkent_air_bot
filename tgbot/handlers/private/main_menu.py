@@ -38,7 +38,7 @@ async def get_aqi_forecast(
 ):
     forecast_list = await repo.aqi.get_forecast_aqi()
     if len(forecast_list) == 0:
-        await call.answer(l10n.get_text(key="response-error"), show_alert=True)
+        await call.answer(l10n.get_text(key="no-forecast-error"), show_alert=True)
         return
     text = format_forecast_aqi_info(forecast_list=forecast_list, l10n=l10n)
     await call.answer()

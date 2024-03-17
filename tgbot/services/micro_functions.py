@@ -19,7 +19,7 @@ def get_correct_update_run_time(now: datetime):
     seconds = int(now.strftime("%S"))
 
     if minutes % 5 == 0 and seconds <= 5:
-        pass
+        update_run_time = now.replace(minute=now.minute)
 
     elif minutes > 55:
         update_run_time = now.replace(hour=now.hour + 1, minute=0, second=0, microsecond=0)

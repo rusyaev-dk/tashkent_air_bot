@@ -16,10 +16,10 @@ health-implications-2 =
     Havo sifati o'rtacha, ammo qariyalar va bolalar kabi ba'zi zaif guruhlarga salbiy ta'sir ko'rsatishi mumkin. Ushbu guruhlar uchun uzoq vaqt ochiq havoda ta'sir qilishni cheklash tavsiya etiladi. Aksariyat odamlar xavf ostida emas.
 
 health-implications-3 =
-    Barcha yosh guruhlari salomatlikka jiddiy salbiy ta'sir ko'rsatishi mumkin. Ochiq jismoniy faoliyatdan qochish va uyda qolish, ayniqsa zaif guruhlar (keksalar va bolalar) uchun tavsiya etiladi. Bundan tashqari, havo tozalagichlardan foydalanish tavsiya etiladi.
+    Barcha yosh guruhlari salomatlikka jiddiy salbiy ta'sir ko'rsatishi mumkin. Ochiq jismoniy faoliyatdan qochish va uyda qolish, ayniqsa zaif guruhlar (keksalar va bolalar) uchun tavsiya etiladi. Iloji bo'lsa, havo tozalagichlardan foydalaning.
 
 health-implications-4 =
-    Favqulodda vaziyat. Barcha yosh guruhlari salomatligi jiddiy xavf ostida. Tashqarida har qanday faoliyatni cheklash, niqoblar va havo tozalash vositalaridan foydalanish talab etiladi.
+    Barcha yosh guruhlari salomatligi jiddiy xavf ostida. Tashqarida har qanday faoliyatni cheklash, niqoblar va havo tozalash vositalaridan foydalanish talab etiladi.
 
 health-implications-5 =
     Havoning haddan tashqari ifloslanishi. Ko'chaga chiqmaslik va o'zingizni ifloslangan havodan himoya qilish uchun barcha choralarni ko'rish tavsiya etiladi: maxsus niqoblar, tozalash vositalari va boshqalar.

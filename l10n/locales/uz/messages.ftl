@@ -40,12 +40,12 @@ reference =
     ❓ { $article_4 }
 
 current-aqi =
+    { $pollution_level_emoji } <b>{ $pollution_level }.</b> { $health_implications }
+
     <b>Havo sifati indeksi:</b>
     - PM2.5: <b>{ $pm25_value }</b>
     - PM10: <b>{ $pm10_value }</b>
     - o3: <b>{ $o3_value }</b>
-
-    { $pollution_level_emoji } <b>{ $pollution_level }.</b> { $health_implications }
 
     ⏳ <b>Yangilangan: { $date } { $month }, { $time }</b>
 

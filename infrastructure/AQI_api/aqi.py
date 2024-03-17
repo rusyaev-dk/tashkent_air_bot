@@ -1,8 +1,9 @@
 import asyncio
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
 
 from typing import List, Tuple, Union
 
+import pytz
 from aiogram import Bot
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -26,22 +27,25 @@ class AQIApi(BaseClient):
     def _forecast_response_deserialization(
             response: dict,
     ) -> Tuple[CurrentAQIModel, List[ForecastAQIModel]]:
-
+        tz = pytz.timezone('Asia/Tashkent')
         data = response["data"]
         current_aqi_time = data["time"]
         current_aqi_relevance_date = dt.strptime(current_aqi_time["s"], '%Y-%m-%d %H:%M:%S')
         current_aqi_data = data["iaqi"]
+
         today = dt.now()
+        # if current_aqi_relevance_date.date() < today.date():
+        #     raise OutdatedDataApiError
 
-        if current_aqi_relevance_date.date() < today.date():
-            raise OutdatedDataApiError
-
-        current_aqi_object = CurrentAQIModel(
-            relevance_date=current_aqi_relevance_date,
-            pm25_value=float(current_aqi_data.get("pm25", {}).get("v", None)),
-            pm10_value=float(current_aqi_data.get("pm10", {}).get("v", None)),
-            o3_value=float(current_aqi_data.get("o3", {}).get("v", None)),
-        )
+        if today.astimezone(tz=tz) - current_aqi_relevance_date.astimezone(tz=tz) > timedelta(hours=1):
+            current_aqi_object = None
+        else:
+            current_aqi_object = CurrentAQIModel(
+                relevance_date=current_aqi_relevance_date,
+                pm25_value=float(current_aqi_data.get("pm25", {}).get("v", None)),
+                pm10_value=float(current_aqi_data.get("pm10", {}).get("v", None)),
+                o3_value=float(current_aqi_data.get("o3", {}).get("v", None)),
+            )
 
         forecast_data = data.get("forecast", {}).get("daily", {})
         forecast_lengths = [len(forecast_data[key]) for key in ["pm25", "pm10", "o3"]]
@@ -67,8 +71,8 @@ class AQIApi(BaseClient):
 
             forecast_aqi_objects.append(forecast_aqi_object)
 
-        if len(forecast_aqi_objects) == 0:
-            raise ForecastValueApiError
+        # if len(forecast_aqi_objects) == 0:
+        #     raise ForecastValueApiError
 
         return current_aqi_object, forecast_aqi_objects
 
@@ -77,23 +81,26 @@ class AQIApi(BaseClient):
             response: dict,
             o3_value: float
     ) -> CurrentAQIModel:
+        tz = pytz.timezone('Asia/Tashkent')
         data = response["data"]
         current_aqi_time = data["time"]
-        current_aqi_relevance_date = dt.strptime(current_aqi_time["s"], '%Y-%m-%d %H:%M:%S')
-
+        current_aqi_relevance_date: dt = dt.strptime(current_aqi_time["s"], '%Y-%m-%d %H:%M:%S')
         current_aqi_data = data["iaqi"]
 
-        today = dt.now()
-        if current_aqi_relevance_date.date() < today.date():
-            raise OutdatedDataApiError
+        today: dt = dt.now()
 
-        current_aqi_object = CurrentAQIModel(
-            relevance_date=current_aqi_relevance_date,
-            pm25_value=float(current_aqi_data.get("pm25", {}).get("v", None)),
-            pm10_value=float(current_aqi_data.get("pm10", {}).get("v", None)),
-            o3_value=o3_value,
-        )
+        # if current_aqi_relevance_date.date() < today.date():
+        #     raise OutdatedDataApiError
 
+        if today.astimezone(tz=tz) - current_aqi_relevance_date.astimezone(tz=tz) > timedelta(hours=1):
+            current_aqi_object = None
+        else:
+            current_aqi_object = CurrentAQIModel(
+                relevance_date=current_aqi_relevance_date,
+                pm25_value=float(current_aqi_data.get("pm25", {}).get("v", None)),
+                pm10_value=float(current_aqi_data.get("pm10", {}).get("v", None)),
+                o3_value=o3_value,
+            )
         return current_aqi_object
 
     @staticmethod
@@ -189,7 +196,7 @@ class AQIApi(BaseClient):
             responses: List,
             responses_with_forecast: List,
             config: Config,
-            bot: Bot
+            bot: Bot,
     ) -> Union[Tuple[List, List], None]:
         current_aqi_objects: List[CurrentAQIModel] = []
         forecast_aqi_objects: List[List[ForecastAQIModel]] = []
@@ -200,19 +207,25 @@ class AQIApi(BaseClient):
                     aqi_objects = self._forecast_response_deserialization(
                         response=response[1],
                     )
-                    current_aqi_objects.append(aqi_objects[0])
+                    if aqi_objects[0]:
+                        current_aqi_objects.append(aqi_objects[0])
                     forecast_aqi_objects.append(aqi_objects[1])
                 except OutdatedDataApiError:
+                    continue
+                except IncorrectAqiValueApiError:
                     continue
 
             for response in responses:
                 try:
                     current_aqi_obj = self._response_deserialization(
                         response=response[1],
-                        o3_value=current_aqi_objects[0].o3_value
+                        o3_value=current_aqi_objects[0].o3_value if len(current_aqi_objects) > 0 else 0.1
                     )
-                    current_aqi_objects.append(current_aqi_obj)
+                    if current_aqi_obj:
+                        current_aqi_objects.append(current_aqi_obj)
                 except OutdatedDataApiError:
+                    continue
+                except IncorrectAqiValueApiError:
                     continue
         except KeyError as err:
             await broadcast(bot, users=config.tg_bot.admin_ids,
@@ -302,7 +315,7 @@ class AQIApi(BaseClient):
                 config=config, bot=bot
             )
 
-            if not processed or len(processed[0]) == 0 or len(processed[1]) == 0:
+            if not processed or (len(processed[0]) == 0 and len(processed[1]) == 0):
                 return
 
             current_aqi_approx_object = self._current_aqi_approximation(current_aqi_objects=processed[0])
