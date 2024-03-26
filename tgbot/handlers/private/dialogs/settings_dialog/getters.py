@@ -3,7 +3,7 @@ from typing import List, Dict
 from aiogram.types import User as AIOGRAMuser
 from aiogram_dialog import DialogManager
 
-from infrastructure.database.repo.requests import RequestsRepo
+from infrastructure.database.repository.requests import DBRequestsRepository
 from l10n.translator import LocalizedTranslator
 from tgbot.services import generate_random_id
 from tgbot.services.micro_functions import find_notification_in_list
@@ -15,7 +15,7 @@ async def overall_settings_getter(
 ):
     user: AIOGRAMuser = dialog_manager.event.from_user
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
+    repo: DBRequestsRepository = dialog_manager.middleware_data.get("repository")
 
     db_user = await repo.users.get_user(telegram_id=user.id)
     key = 'turn-notifications-off-btn' if db_user.notifications else 'turn-notifications-on-btn'
@@ -40,7 +40,7 @@ async def change_notifications_getter(
         **kwargs
 ):
     user: AIOGRAMuser = dialog_manager.event.from_user
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
+    repo: DBRequestsRepository = dialog_manager.middleware_data.get("repository")
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
     chosen_notifications: List[Dict] = dialog_manager.dialog_data.get("chosen_notifications")
     made_changes_flag: bool = dialog_manager.dialog_data.get("made_changes_flag")

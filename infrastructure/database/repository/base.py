@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class BaseRepo:
+class BaseRepository:
     """
     A class representing a base repository for handling database operations.
 

@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, StartMode
 
-from infrastructure.database.repo.requests import RequestsRepo
+from infrastructure.database.repository.requests import DBRequestsRepository
 from l10n.translator import LocalizedTranslator
 from tgbot.keyboards.inline import aqi_forecast_kb, WeekAqiForecastFactory
 from tgbot.keyboards.reply import feedback_kb
@@ -17,7 +17,7 @@ menu_router = Router()
 @flags.rate_limit(key="default")
 async def get_aqi(
         message: Message,
-        repo: RequestsRepo,
+        repo: DBRequestsRepository,
         l10n: LocalizedTranslator,
         dialog_manager: DialogManager
 ):
@@ -33,7 +33,7 @@ async def get_aqi(
 @menu_router.callback_query(WeekAqiForecastFactory.filter())
 async def get_aqi_forecast(
         call: CallbackQuery,
-        repo: RequestsRepo,
+        repo: DBRequestsRepository,
         l10n: LocalizedTranslator
 ):
     forecast_list = await repo.aqi.get_forecast_aqi()

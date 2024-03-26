@@ -22,7 +22,7 @@ admin_router.message.filter(AdminFilter())
 @flags.rate_limit(key="default")
 async def get_bot_statistics(
         message: Message,
-        repo: RequestsRepo
+        repo: DBRequestsRepository
 ):
     text = await format_statistics_info(repo=repo)
     await message.answer(text)
@@ -114,7 +114,7 @@ async def get_notify_media(
 async def notify_approve(
         call: CallbackQuery,
         state: FSMContext,
-        repo: RequestsRepo,
+        repo: DBRequestsRepository,
         l10n: LocalizedTranslator,
         callback_data: NotifyUsersApproveFactory,
 ):

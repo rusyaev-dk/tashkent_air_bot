@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
-from infrastructure.database.repo.requests import RequestsRepo
+from infrastructure.database.repository.requests import DBRequestsRepository
 from l10n.translator import LocalizedTranslator, TranslatorHub
 from tgbot.keyboards.inline import SetUserLanguageFactory
 from tgbot.keyboards.reply import main_menu_kb
@@ -34,7 +34,7 @@ async def bot_start(
 @start_router.callback_query(SetUserLanguageFactory.filter())
 async def set_user_language(
         call: CallbackQuery,
-        repo: RequestsRepo,
+        repo: DBRequestsRepository,
         callback_data: SetUserLanguageFactory,
         translator_hub: TranslatorHub,
 ):

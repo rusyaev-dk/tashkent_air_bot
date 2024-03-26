@@ -4,11 +4,11 @@ from sqlalchemy import select, func, update, delete, and_
 from sqlalchemy.dialects.postgresql import insert
 
 from infrastructure.database.models import User, UserNotification
-from infrastructure.database.repo.base import BaseRepo
+from infrastructure.database.repository.base import BaseRepository
 from tgbot.services import generate_random_id
 
 
-class UserRepo(BaseRepo):
+class UserRepository(BaseRepository):
     async def add_user(
         self,
         telegram_id: int,

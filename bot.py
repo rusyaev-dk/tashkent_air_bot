@@ -12,7 +12,7 @@ from aiogram_dialog import setup_dialogs
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from infrastructure.AQI_api.aqi import AQIApi
+from infrastructure.api.aqi_repo import AQIApiRepo
 from infrastructure.database.setup import create_session_pool, create_engine
 from l10n.translator import TranslatorHub
 from tgbot.config import load_config, Config
@@ -88,7 +88,7 @@ def register_global_middlewares(
 def setup_scheduling(
         scheduler: AsyncIOScheduler,
         bot: Bot,
-        aqi_api: AQIApi,
+        aqi_api: AQIApiRepo,
         config: Config,
         translator_hub: TranslatorHub,
         session_pool: async_sessionmaker
@@ -96,12 +96,12 @@ def setup_scheduling(
     now = datetime.now()
     update_run_time = get_correct_update_run_time(now=now)
 
-    scheduler.add_job(
-        func=aqi_api.update_aqi, trigger='interval',
-        minutes=SCHEDULER_AQI_INTERVAL_MINUTES, replace_existing=True,
-        start_date=update_run_time,
-        args=(bot, config, session_pool)
-    )
+    # scheduler.add_job(
+    #     func=aqi_api.update_aqi, trigger='interval',
+    #     minutes=SCHEDULER_AQI_INTERVAL_MINUTES, replace_existing=True,
+    #     start_date=update_run_time,
+    #     args=(bot, config, session_pool)
+    # )
 
     # scheduler.add_job(
     #     func=aqi_api.update_aqi, trigger='interval',
@@ -139,7 +139,7 @@ async def main():
     setup_logging()
 
     config = load_config(".env")
-    aqi_api = AQIApi(api_key=config.api.api_key)
+    aqi_api = AQIApiRepo(api_key=config.api.api_key)
     storage = get_storage(config)
 
     bot = Bot(token=config.tg_bot.token, parse_mode="HTML")
