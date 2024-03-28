@@ -1,6 +1,4 @@
-import asyncio
-import traceback
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from infrastructure.api.base import BaseClient
 from infrastructure.api.exceptions import ApiResponseCodeException
@@ -21,5 +19,5 @@ class AQIClient(BaseClient):
         response = await self._make_request(url=url, method="GET", params=params)
 
         if response[0] != 200:
-            raise ApiResponseCodeException(response_code=response[0], traceback=traceback.format_exc())
+            raise ApiResponseCodeException(response_code=response[0], station_id=station_id)
         return response[1]

@@ -18,7 +18,7 @@ class L10nMiddleware(BaseMiddleware):
         event: Message,
         data: Dict[str, Any]
     ) -> Any:
-        repo = data["repository"]
+        repo = data["repo"]
         language_code = await repo.users.get_user_language_code(telegram_id=event.from_user.id)
         if language_code not in self.l10ns:
             language_code = self.default_locale

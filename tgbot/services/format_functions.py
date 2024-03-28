@@ -1,5 +1,5 @@
 from infrastructure.database.models import CurrentAQI, ForecastAQI
-from infrastructure.database.repository.requests import DBRequestsRepository
+from infrastructure.database.repository.requests import RequestsRepo
 from l10n.translator import LocalizedTranslator
 from tgbot.misc.constants import pollution_levels_emoji
 
@@ -88,7 +88,7 @@ def format_reference_text(
 
 
 async def format_statistics_info(
-        repo: DBRequestsRepository
+        repo: RequestsRepo
 ) -> str:
     total_users_count = await repo.users.get_users_count()
     active_users_count = await repo.users.get_active_users_count()

@@ -1,18 +1,17 @@
 import asyncio
-
 import logging
-import traceback
-from datetime import datetime
 
+from datetime import datetime
 from typing import List, Dict, Any
 
 from aiogram import Bot
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from infrastructure.api.aqi_client import AQIClient
-from infrastructure.api.exceptions import ApiResponseCodeException, ApiNoResponsesException, ApiIncorrectValueException
-from infrastructure.api.models import AQIModel, AQIFullForecast, AQIDayForecast
-from infrastructure.database.repository.requests import DBRequestsRepository
+from infrastructure.api.exceptions import ApiResponseCodeException, ApiNoDataException, \
+    ApiOutdatedDataException
+from infrastructure.api.models import AQIModel, AQIDayForecast
+from infrastructure.database.repository.requests import RequestsRepo
 from tgbot.config import Config
 from tgbot.services.broadcaster import broadcast
 
@@ -66,20 +65,23 @@ class AQIApiRepo:
             try:
                 response = await self.__aqi_client.get_aqi_response(station_id=aqi_station.get("station_id"))
                 responses.append(response)
-                await asyncio.sleep(0.05)
+                await asyncio.sleep(0.1)
             except ApiResponseCodeException as exception:
                 logging.error(msg=exception)
                 continue
 
         if len(responses) == 0:
-            raise ApiNoResponsesException(traceback=traceback.format_exc())
+            return []
 
         aqi_models: List[AQIModel] = []
         for response in responses:
             try:
                 aqi_model = AQIModel.from_json(response["data"])
                 aqi_models.append(aqi_model)
-            except ApiIncorrectValueException as exception:
+            except ApiOutdatedDataException as exception:
+                logging.error(msg=exception)
+                continue
+            except ApiNoDataException as exception:
                 logging.error(msg=exception)
                 continue
 
@@ -98,7 +100,7 @@ class AQIApiRepo:
         return outdated_count == len(aqi_models)
 
     @staticmethod
-    def _approximation(
+    def _models_data_approximation(
             aqi_models: List[AQIModel]
     ) -> AQIModel:
 
@@ -114,8 +116,6 @@ class AQIApiRepo:
         approx_forecast_pm10: float = 0
         approx_forecast_o3: float = 0
 
-        approx_forecast_list: List[AQIDayForecast] = []
-
         for aqi_model in aqi_models[1:]:  # вычисление среднего значения для текущего индекса
             if latest_date or aqi_model.relevance_date > latest_date:
                 latest_date = aqi_model.relevance_date
@@ -124,33 +124,36 @@ class AQIApiRepo:
             approx_pm10 += aqi_model.iaqi.pm10
             approx_o3 += aqi_model.iaqi.o3
 
-        day_index = 1
-        for i in range(models_list_length):  # вычисление среднего значения для прогноза
-            for j in range(models_list_length):
-                approx_forecast_pm25 += aqi_models[j].forecast.forecast_list[day_index].pm25
-                approx_forecast_pm10 += aqi_models[j].forecast.forecast_list[day_index].pm10
-                approx_forecast_o3 += aqi_models[j].forecast.forecast_list[day_index].o3
+        approx_forecast_list: List[AQIDayForecast] = []
+        if forecast_list_length != 0:
 
-            approx_forecast_pm25 /= len(aqi_models[i].forecast.forecast_list)
-            approx_forecast_pm10 /= len(aqi_models[i].forecast.forecast_list)
-            approx_forecast_o3 /= len(aqi_models[i].forecast.forecast_list)
+            day_index = 0
+            for i in range(models_list_length):  # вычисление среднего значения для прогноза
+                for j in range(models_list_length):
+                    approx_forecast_pm25 += aqi_models[j].forecast.forecast_list[day_index].pm25
+                    approx_forecast_pm10 += aqi_models[j].forecast.forecast_list[day_index].pm10
+                    approx_forecast_o3 += aqi_models[j].forecast.forecast_list[day_index].o3
 
-            approx_forecast_day = AQIDayForecast(
-                day=aqi_models[0].forecast.forecast_list[day_index].day,
-                pm25=approx_forecast_pm25,
-                pm10=approx_forecast_pm10,
-                o3=approx_forecast_o3,
-            )
+                approx_forecast_pm25 /= len(aqi_models[i].forecast.forecast_list)
+                approx_forecast_pm10 /= len(aqi_models[i].forecast.forecast_list)
+                approx_forecast_o3 /= len(aqi_models[i].forecast.forecast_list)
 
-            approx_forecast_list.append(approx_forecast_day)
-            day_index += 1
+                approx_forecast_day = AQIDayForecast(
+                    day=aqi_models[0].forecast.forecast_list[day_index].day,
+                    pm25=approx_forecast_pm25,
+                    pm10=approx_forecast_pm10,
+                    o3=approx_forecast_o3,
+                )
+
+                approx_forecast_list.append(approx_forecast_day)
+                day_index += 1
 
         approx_aqi_model = AQIModel.from_values(
             pm25=approx_pm25 / models_list_length,
             pm10=approx_pm10 / models_list_length,
             o3=approx_o3 / models_list_length,
             relevance_date=latest_date,
-            forecast=AQIFullForecast(forecast_list=approx_forecast_list),
+            forecast_list=approx_forecast_list,
         )
 
         return approx_aqi_model
@@ -161,10 +164,9 @@ class AQIApiRepo:
             config: Config,
             session_pool: async_sessionmaker
     ):
-        try:
-            aqi_models: List[AQIModel] = await self._get_aqi_models()
-        except ApiNoResponsesException as exception:
-            logging.error(msg=exception)
+        aqi_models: List[AQIModel] = await self._get_aqi_models()
+        if len(aqi_models) == 0:
+            logging.error(msg="AQI models list is empty.")
             await broadcast(
                 bot=bot,
                 users=config.tg_bot.admin_ids,
@@ -173,7 +175,7 @@ class AQIApiRepo:
             return
 
         async with session_pool() as session:
-            repo = DBRequestsRepository(session)
+            repo = RequestsRepo(session)
             previous_aqi = await repo.aqi.get_current_aqi()
             prev_aqi_exists = True if previous_aqi else False
 
@@ -187,16 +189,18 @@ class AQIApiRepo:
                 )
                 return
 
-            approximated_aqi_model = self._approximation(aqi_models=aqi_models)
-            if not prev_aqi_exists:
-                await repo.aqi.add_current_aqi(aqi_model=approximated_aqi_model)
+            approximated_aqi_model = self._models_data_approximation(aqi_models=aqi_models)
+            has_forecast: bool = len(approximated_aqi_model.forecast.forecast_list) > 0
 
-                # if len(approximated_aqi_model.forecast.forecast_list) > 0:
-                #     await repo.aqi.add_forecast_aqi(aqi_model=approximated_aqi_model)
+            if prev_aqi_exists:
+                await repo.aqi.update_current_aqi(new_current_aqi=approximated_aqi_model)
+                if has_forecast:
+                    await repo.aqi.update_forecast_aqi(new_forecast_aqi=approximated_aqi_model)
                 await session.commit()
                 return
 
-            await repo.aqi.update_current_aqi(new_current_aqi=approximated_aqi_model)
-            # if len(approximated_aqi_model.forecast.forecast_list) > 0:
-            #     await repo.aqi.update_forecast_aqi(new_forecast_aqi=approximated_aqi_model)
+            await repo.aqi.add_current_aqi(aqi_model=approximated_aqi_model)
+
+            if has_forecast:
+                await repo.aqi.add_forecast_aqi(aqi_model=approximated_aqi_model)
             await session.commit()

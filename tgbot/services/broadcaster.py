@@ -10,7 +10,7 @@ from aiogram.types import InlineKeyboardMarkup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from infrastructure.database.models import User
-from infrastructure.database.repository.requests import DBRequestsRepository
+from infrastructure.database.repository.requests import RequestsRepo
 from l10n.translator import TranslatorHub
 from tgbot.services.format_functions import format_current_aqi_info
 
@@ -230,7 +230,7 @@ async def aqi_users_notifying(
         translator_hub: TranslatorHub,
 ):
     async with session_pool() as session:
-        repo = DBRequestsRepository(session)
+        repo = RequestsRepo(session)
         current_aqi = await repo.aqi.get_current_aqi()
         if not current_aqi:
             return

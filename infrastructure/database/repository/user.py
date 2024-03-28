@@ -4,11 +4,11 @@ from sqlalchemy import select, func, update, delete, and_
 from sqlalchemy.dialects.postgresql import insert
 
 from infrastructure.database.models import User, UserNotification
-from infrastructure.database.repository.base import BaseRepository
+from infrastructure.database.repository.base import BaseRepo
 from tgbot.services import generate_random_id
 
 
-class UserRepository(BaseRepository):
+class UserDBRepo(BaseRepo):
     async def add_user(
         self,
         telegram_id: int,
@@ -96,7 +96,12 @@ class UserRepository(BaseRepository):
         return result
 
     async def get_users_count_by_language(self, language_code: str) -> int:
-        stmt = select(func.count(User.telegram_id)).where(User.language == language_code)
+        stmt = select(func.count(User.telegram_id)).where(
+            and_(
+                User.language == language_code,
+                User.is_active == True
+            )
+        )
         result = await self.session.scalar(stmt)
         return result
 

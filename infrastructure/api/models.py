@@ -1,7 +1,9 @@
 from typing import Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from infrastructure.api.exceptions import ApiIncorrectValueException
+import pytz
+
+from infrastructure.api.exceptions import ApiNoDataException, ApiOutdatedDataException, ApiIncorrectKeyException
 from tgbot.services import generate_random_id
 
 
@@ -22,8 +24,13 @@ class IAQI:
         pm25 = json.get("pm25", {}).get("v", None)
         o3 = json.get("o3", {}).get("v", None)
 
-        if pm10 is None or pm25 is None or o3 is None:
-            raise ApiIncorrectValueException(incorrect_value=0)
+        if o3 is None:
+            o3 = 0.1
+
+        if pm10 is None:
+            raise ApiNoDataException(data_type="PM 1.0")
+        if pm25 is None:
+            raise ApiNoDataException(data_type="PM 2.5")
 
         return cls(pm10, pm25, o3)
 
@@ -31,7 +38,7 @@ class IAQI:
 class Time:
     def __init__(
             self,
-            s: str
+            s: datetime
     ):
         self.s = s
 
@@ -40,7 +47,14 @@ class Time:
         s = json.get("s", None)
 
         if s is None:
-            raise ApiIncorrectValueException(incorrect_value="_")
+            raise ApiNoDataException(data_type="time -> s")
+
+        s = datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+        tz = pytz.timezone('Asia/Tashkent')
+        today = datetime.now()
+
+        if today.astimezone(tz=tz) - s.astimezone(tz=tz) > timedelta(hours=1):
+            raise ApiOutdatedDataException()
 
         return cls(s)
 
@@ -101,7 +115,7 @@ class AQIModel:
         forecast: AQIFullForecast
     ):
         self.request_id = generate_random_id(length=15)
-        self.relevance_date = datetime.strptime(time.s, '%Y-%m-%d %H:%M:%S')
+        self.relevance_date = time.s
         self.iaqi = iaqi
         self.forecast = forecast
 
@@ -112,19 +126,29 @@ class AQIModel:
         pm10: float,
         o3: float,
         relevance_date: datetime,
-        forecast: AQIFullForecast
+        forecast_list: List[AQIDayForecast]
     ):
         iaqi = IAQI(pm10=pm10, pm25=pm25, o3=o3)
-        time = Time(s=relevance_date.strftime("%Y-%m-%d %H:%M:%S"))
-        return cls(iaqi, time, forecast)
+        time = Time(s=relevance_date)
+        full_forecast = AQIFullForecast(forecast_list=forecast_list)
+        return cls(iaqi, time, full_forecast)
 
     @classmethod
     def from_json(cls, json: Dict[str, Any]):
         try:
-            iaqi = IAQI.from_json(json["iaqi"])
             time = Time.from_json(json["time"])
-            forecast = AQIFullForecast.from_json(json["forecast"]["daily"])
+            iaqi = IAQI.from_json(json["iaqi"])
+
+            try:
+                forecast = AQIFullForecast.from_json(json["forecast"]["daily"])
+            except KeyError:
+                forecast = AQIFullForecast(forecast_list=[])
+                pass
 
             return cls(iaqi, time, forecast)
-        except ApiIncorrectValueException:
+        except ApiNoDataException:
+            raise
+        except KeyError as err:
+            raise ApiIncorrectKeyException(key=err.args[0])
+        except ApiOutdatedDataException:
             raise

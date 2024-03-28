@@ -6,7 +6,7 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button, Select
 
 from infrastructure.database.models import User
-from infrastructure.database.repository.requests import DBRequestsRepository
+from infrastructure.database.repository.requests import RequestsRepo
 from l10n.translator import LocalizedTranslator, TranslatorHub
 from tgbot.keyboards.reply import main_menu_kb
 from tgbot.misc.states import SettingsSG
@@ -32,7 +32,7 @@ async def switch_user_notifications(
         button: Button,
         dialog_manager: DialogManager
 ):
-    repo: DBRequestsRepository = dialog_manager.middleware_data.get("repository")
+    repo: RequestsRepo = dialog_manager.middleware_data.get("repository")
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
 
     user_notifications = await repo.users.get_user_notifications(telegram_id=call.from_user.id)
@@ -120,7 +120,7 @@ async def save_user_notification_settings(
         button: Button,
         dialog_manager: DialogManager,
 ):
-    repo: DBRequestsRepository = dialog_manager.middleware_data.get("repository")
+    repo: RequestsRepo = dialog_manager.middleware_data.get("repository")
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
 
     chosen_notifications: List = dialog_manager.dialog_data.get("chosen_notifications")
@@ -146,7 +146,7 @@ async def change_user_language(
         dialog_manager: DialogManager,
 ):
     translator_hub: TranslatorHub = dialog_manager.middleware_data.get("translator_hub")
-    repo: DBRequestsRepository = dialog_manager.middleware_data.get("repository")
+    repo: RequestsRepo = dialog_manager.middleware_data.get("repository")
     language_code = button.widget_id[:2]
 
     await repo.users.update_user(User.telegram_id == call.from_user.id, language=language_code)

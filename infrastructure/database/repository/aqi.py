@@ -5,10 +5,10 @@ from sqlalchemy.dialects.postgresql import insert
 
 from infrastructure.api.models import AQIModel
 from infrastructure.database.models import CurrentAQI, ForecastAQI
-from infrastructure.database.repository.base import BaseRepository
+from infrastructure.database.repository.base import BaseRepo
 
 
-class AQIDBRepository(BaseRepository):
+class AQIDBRepo(BaseRepo):
     async def add_current_aqi(
             self,
             aqi_model: AQIModel
