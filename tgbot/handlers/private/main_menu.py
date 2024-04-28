@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, StartMode
 
-from infrastructure.database.repo.requests import RequestsRepo
+from infrastructure.database.repository.requests import RequestsRepo
 from l10n.translator import LocalizedTranslator
 from tgbot.keyboards.inline import aqi_forecast_kb, WeekAqiForecastFactory
 from tgbot.keyboards.reply import feedback_kb
@@ -23,11 +23,13 @@ async def get_aqi(
 ):
     await dialog_manager.reset_stack()
     current_aqi = await repo.aqi.get_current_aqi()
+    forecast_list = await repo.aqi.get_forecast_aqi()
     if not current_aqi:
         await message.answer(l10n.get_text(key="response-error"))
         return
     text = format_current_aqi_info(current_aqi=current_aqi, l10n=l10n)
-    await message.answer(text, reply_markup=aqi_forecast_kb(l10n=l10n))
+    keyboard = aqi_forecast_kb(l10n=l10n) if len(forecast_list) > 0 else None
+    await message.answer(text, reply_markup=keyboard)
 
 
 @menu_router.callback_query(WeekAqiForecastFactory.filter())

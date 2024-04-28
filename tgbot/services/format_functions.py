@@ -1,5 +1,5 @@
 from infrastructure.database.models import CurrentAQI, ForecastAQI
-from infrastructure.database.repo.requests import RequestsRepo
+from infrastructure.database.repository.requests import RequestsRepo
 from l10n.translator import LocalizedTranslator
 from tgbot.misc.constants import pollution_levels_emoji
 

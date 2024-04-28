@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
-from infrastructure.database.repo.requests import RequestsRepo
+from infrastructure.database.repository.requests import RequestsRepo
 from l10n.translator import LocalizedTranslator, TranslatorHub
 from tgbot.keyboards.inline import SetUserLanguageFactory
 from tgbot.keyboards.reply import main_menu_kb
