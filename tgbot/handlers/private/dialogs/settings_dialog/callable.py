@@ -22,7 +22,7 @@ async def close_settings(
 ):
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
     await call.message.delete()
-    await call.message.answer(l10n.get_text(key='main-menu'))
+    await call.message.answer(l10n.get_text(key='main-menu-msg'), reply_markup=main_menu_kb(l10n=l10n))
     await dialog_manager.done()
     await dialog_manager.reset_stack()
 
@@ -32,7 +32,7 @@ async def switch_user_notifications(
         button: Button,
         dialog_manager: DialogManager
 ):
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repository")
+    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
 
     user_notifications = await repo.users.get_user_notifications(telegram_id=call.from_user.id)
@@ -120,7 +120,7 @@ async def save_user_notification_settings(
         button: Button,
         dialog_manager: DialogManager,
 ):
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repository")
+    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
 
     chosen_notifications: List = dialog_manager.dialog_data.get("chosen_notifications")
@@ -146,7 +146,7 @@ async def change_user_language(
         dialog_manager: DialogManager,
 ):
     translator_hub: TranslatorHub = dialog_manager.middleware_data.get("translator_hub")
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repository")
+    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
     language_code = button.widget_id[:2]
 
     await repo.users.update_user(User.telegram_id == call.from_user.id, language=language_code)

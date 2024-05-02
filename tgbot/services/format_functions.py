@@ -100,9 +100,9 @@ async def format_statistics_info(
         f"Всего пользователей: <b>{total_users_count}</b> чел.\n"
         f"Активных пользователей: <b>{active_users_count}</b> чел.\n\n"
         f"Распределение по языкам:\n"
-        f"🇷🇺: <b>{ru_users_count}</b> чел. <b>~{int(ru_users_count / total_users_count * 100)}%</b>\n"
-        f"🇺🇿: <b>{uz_users_count}</b> чел. <b>~{int(uz_users_count / total_users_count * 100)}%</b>\n"
-        f"🇬🇧: <b>{en_users_count}</b> чел. <b>~{int(en_users_count / total_users_count * 100)}%</b>\n"
+        f"🇷🇺: <b>{ru_users_count}</b> чел. <b>~{int(ru_users_count / active_users_count * 100)}%</b>\n"
+        f"🇺🇿: <b>{uz_users_count}</b> чел. <b>~{int(uz_users_count / active_users_count * 100)}%</b>\n"
+        f"🇬🇧: <b>{en_users_count}</b> чел. <b>~{int(en_users_count / active_users_count * 100)}%</b>\n"
     )
 
     return text

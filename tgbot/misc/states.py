@@ -6,9 +6,9 @@ class SettingsSG(StatesGroup):
     change_language = State()
     change_notification_time = State()
 
+
 class UserNotificationSettingSG(StatesGroup):
     turn_on_approve = State()
-
 
 
 class FeedbackSG(StatesGroup):

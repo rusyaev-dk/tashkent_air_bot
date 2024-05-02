@@ -1,44 +1,26 @@
+import asyncio
 import html
+import logging
 
-from aiogram import Router, flags, F
-from aiogram.filters import Command
+from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
+from aiogram.types import CallbackQuery, Message
 
+from infrastructure.database.models import User
+from infrastructure.database.repository.requests import RequestsRepo
 from l10n.translator import LocalizedTranslator
 from tgbot.filters.admin import AdminFilter
-from tgbot.keyboards.inline import set_target_language_code_kb, NotifyUsersTargetLanguageFactory, notify_approve_kb, \
-    NotifyUsersApproveFactory
+from tgbot.keyboards.inline import NotifyUsersApproveFactory, notify_approve_kb, NotifyUsersTargetLanguageFactory
 from tgbot.keyboards.reply import main_menu_kb
 from tgbot.misc.states import NotifyUsersSG
-from tgbot.services.broadcaster import *
-from tgbot.services.format_functions import format_statistics_info
-
-admin_router = Router()
-admin_router.message.filter(AdminFilter())
+from tgbot.services.broadcaster import send_animation, send_sticker, send_audio, send_document, send_photo, send_text
 
 
-@admin_router.message(Command("statistics"))
-@flags.rate_limit(key="default")
-async def get_bot_statistics(
-        message: Message,
-        repo: RequestsRepo
-):
-    text = await format_statistics_info(repo=repo)
-    await message.answer(text)
+users_notify_router = Router()
+users_notify_router.message.filter(AdminFilter())
 
 
-@admin_router.message(Command("notify_users"))
-async def notify_users(
-        message: Message,
-        state: FSMContext
-):
-    await message.answer("Настройка рассылки.", reply_markup=ReplyKeyboardRemove())
-    await message.answer("Укажите аудиторию:", reply_markup=set_target_language_code_kb())
-    await state.set_state(NotifyUsersSG.get_target_language_code)
-
-
-@admin_router.callback_query(NotifyUsersSG.get_target_language_code, NotifyUsersTargetLanguageFactory.filter(
+@users_notify_router.callback_query(NotifyUsersSG.get_target_language_code, NotifyUsersTargetLanguageFactory.filter(
     F.target_language_code == "cancel"
 ))
 async def cancel_notifying(
@@ -51,7 +33,7 @@ async def cancel_notifying(
     await state.clear()
 
 
-@admin_router.callback_query(NotifyUsersSG.get_target_language_code, NotifyUsersTargetLanguageFactory.filter())
+@users_notify_router.callback_query(NotifyUsersSG.get_target_language_code, NotifyUsersTargetLanguageFactory.filter())
 async def get_target_language_code(
         call: CallbackQuery,
         state: FSMContext,
@@ -64,7 +46,7 @@ async def get_target_language_code(
     await state.set_state(NotifyUsersSG.get_notify_media)
 
 
-@admin_router.message(NotifyUsersSG.get_notify_media)
+@users_notify_router.message(NotifyUsersSG.get_notify_media)
 async def get_notify_media(
         message: Message,
         state: FSMContext
@@ -72,11 +54,11 @@ async def get_notify_media(
     await message.answer("📬 Пользователям придёт следующее уведомление:")
 
     if not message.caption and not message.text:
-        text_to_send = "💬 Сообщение от администратора."
+        text_to_send = ""
     elif message.caption:
-        text_to_send = f"💬 Сообщение от администратора:\n\n{message.caption}"
+        text_to_send = message.caption
     else:
-        text_to_send = f"💬 Сообщение от администратора:\n\n{message.text}"
+        text_to_send = message.text
 
     if message.text:
         await message.answer(html.escape(text_to_send))
@@ -110,7 +92,7 @@ async def get_notify_media(
     await state.set_state(NotifyUsersSG.notify_approve)
 
 
-@admin_router.callback_query(NotifyUsersSG.notify_approve, NotifyUsersApproveFactory.filter())
+@users_notify_router.callback_query(NotifyUsersSG.notify_approve, NotifyUsersApproveFactory.filter())
 async def notify_approve(
         call: CallbackQuery,
         state: FSMContext,

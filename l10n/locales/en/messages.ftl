@@ -17,7 +17,7 @@ help =
      Please report the error to the administration: <b>{ $support_username }</b>
 
 choose-option = ⚙️ Choose option:
-main-menu = Main menu:
+main-menu-msg = Main menu:
 action-cancelled = Action cancelled.
 notifications-enabled = 🔔 Notifications enabled.
 notifications-disabled = 🔕 Notifications disabled.

@@ -17,7 +17,7 @@ help =
      Xato haqida ma'muriyatga xabar bering: <b>{ $support_username }</b>
 
 choose-option = ⚙️ Variantni tanlang:
-main-menu = Asosiy menyu:
+main-menu-msg = Asosiy menyu:
 action-cancelled = Amal bekor qilindi.
 notifications-enabled = 🔔 Bildirishnomalar yoqilgan.
 notifications-disabled = 🔕 Bildirishnomalar o'chirilgan.

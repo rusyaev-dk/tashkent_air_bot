@@ -40,6 +40,11 @@ class AQIApiRepo:
             "lng": 69.294476,
         },
         {
+            "name": "Tashkent Chilonzor 2",
+            "with_forecast": False,
+            "station_id": "A479296",
+        },
+        {
             "name": "Tashkent Mirabad",
             "with_forecast": False,
             "station_id": "A361171"
@@ -179,20 +184,21 @@ class AQIApiRepo:
             previous_aqi = await repo.aqi.get_current_aqi()
             prev_aqi_exists = True if previous_aqi else False
 
-            if prev_aqi_exists and not self._are_relevance(prev_aqi_date=previous_aqi.relevance_date,
-                                                           aqi_models=aqi_models):
-                logging.error(msg="AQI models are not relevance")
-                await broadcast(
-                    bot=bot,
-                    users=config.tg_bot.admin_ids,
-                    text=f"🛠 AQI models are not relevance."
-                )
-                return
+            # if prev_aqi_exists and not self._are_relevance(prev_aqi_date=previous_aqi.relevance_date,
+            #                                                aqi_models=aqi_models):
+            #     logging.error(msg="AQI models are not relevance")
+            #     await broadcast(
+            #         bot=bot,
+            #         users=config.tg_bot.admin_ids,
+            #         text=f"🛠 AQI models are not relevance."
+            #     )
+            #     return
 
             approximated_aqi_model = self._models_data_approximation(aqi_models=aqi_models)
             has_forecast: bool = len(approximated_aqi_model.forecast.forecast_list) > 0
 
             if prev_aqi_exists:
+                approximated_aqi_model.request_id = previous_aqi.request_id
                 await repo.aqi.update_current_aqi(new_current_aqi=approximated_aqi_model)
                 if has_forecast:
                     await repo.aqi.update_forecast_aqi(new_forecast_aqi=approximated_aqi_model)

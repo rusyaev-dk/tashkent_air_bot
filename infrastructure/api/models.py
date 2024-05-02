@@ -53,7 +53,7 @@ class Time:
         tz = pytz.timezone('Asia/Tashkent')
         today = datetime.now()
 
-        if today.astimezone(tz=tz) - s.astimezone(tz=tz) > timedelta(hours=1):
+        if today.astimezone(tz=tz) - s.astimezone(tz=tz) > timedelta(hours=4):
             raise ApiOutdatedDataException()
 
         return cls(s)

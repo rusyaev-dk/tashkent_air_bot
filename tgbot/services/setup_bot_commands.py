@@ -22,7 +22,10 @@ async def update_user_commands(bot: Bot, l10n: LocalizedTranslator):
         ),
     ]
 
-    await bot.set_my_commands(commands=default_commands, scope=BotCommandScopeDefault())
+    await bot.set_my_commands(
+        commands=default_commands,
+        scope=BotCommandScopeDefault()
+    )
 
 
 async def setup_admin_commands(
@@ -45,4 +48,7 @@ async def setup_admin_commands(
     ]
 
     for admin_id in admin_ids:
-        await bot.set_my_commands(commands=admin_commands, scope=BotCommandScopeChat(chat_id=admin_id))
+        await bot.set_my_commands(
+            commands=admin_commands,
+            scope=BotCommandScopeChat(chat_id=admin_id)
+        )
