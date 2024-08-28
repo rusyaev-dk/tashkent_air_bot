@@ -1,4 +1,10 @@
-# Tashkent air Telegram Bot
+# :cityscape: Tashkent air Bot
+Tashkent air Bot is a Telegram bot designed to provide real-time information about air quality index (AQI) in Tashkent city.
+
+## Screenshots
+
+![Main menu](/screenshots/tashkent_air_bot_screenshot_1.jpg "Main menu")
+![Settings](/screenshots/tashkent_air_bot_screenshot_2.jpg "Settings")
 
 ## Features
 - **Built with tgbot_template_v3**: The Bot is developed using my `tgbot_template_v3`, ensuring a structured and maintainable codebase.
@@ -6,33 +12,3 @@
 - **API Integration**: Fetches air quality data from `aqicin.org` API.
 - **Localization**: Implements bot localization using `fluent`, with a custom adapter for seamless integration.
 - **Scheduling**: Supports scheduling tasks to send notifications to users.
-
-## Screenshots
-
-<table>
-  <tr>
-    <td>
-      <img src="/screenshots/bot_info.PNG" alt="Bot info" title="Bot info" width="200"/>
-    </td>
-    <td>
-      <img src="/screenshots/hello_screen.PNG" alt="Hello screen" title="Hello screen" width="200"/>
-    </td>
-     <td>
-      <img src="/screenshots/aqi_screen.PNG" alt="AQI screen" title="AQI screen" width="200"/>
-    </td>
-    <td>
-      <img src="/screenshots/informative_screen.PNG" alt="Informative screen" title="Informative screen" width="200"/>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <img src="/screenshots/general_settings.PNG" alt="General settings" title="General settings" width="200"/>
-    </td>
-    <td>
-      <img src="/screenshots/notification_settings.PNG" alt="Notification settings" title="Notification settings" width="200"/>
-    </td>
-    <td>
-      <img src="/screenshots/language_settings.PNG" alt="Language settings" title="Language settings" width="200"/>
-    </td>
-  </tr>
-</table>
