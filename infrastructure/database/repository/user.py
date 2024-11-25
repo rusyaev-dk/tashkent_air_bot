@@ -10,55 +10,33 @@ from tgbot.services import generate_random_id
 
 class UserDBRepo(BaseRepo):
     async def add_user(
-        self,
-        telegram_id: int,
-        full_name: str,
-        language: str,
-        username: Optional[str] = None,
+            self,
+            telegram_id: int,
+            full_name: str,
+            language: str,
+            username: Optional[str] = None,
     ) -> User:
-        stmt = (
-            insert(User)
-            .values(
-                telegram_id=telegram_id,
-                full_name=full_name,
-                language=language,
-                username=username,
-            )
-            .on_conflict_do_update(
-                index_elements=[User.telegram_id],
-                set_={
-                    "full_name": full_name,
-                    "language": language,
-                    "username": username
-                }
-            )
-            .returning(User)
-        )
+        stmt = insert(User).values(
+            telegram_id=telegram_id,
+            full_name=full_name,
+            language=language,
+            username=username
+        ).prefix_with("OR REPLACE")
         result = await self.session.execute(stmt)
-
         await self.session.commit()
         return result.scalar_one()
 
-    async def get_user(
-            self,
-            telegram_id: int
-    ) -> User:
+    async def get_user(self, telegram_id: int) -> Optional[User]:
         stmt = select(User).where(User.telegram_id == telegram_id)
         result = await self.session.scalar(stmt)
         return result
 
-    async def get_user_language_code(
-            self,
-            telegram_id: int
-    ) -> str:
+    async def get_user_language_code(self, telegram_id: int) -> str:
         stmt = select(User.language).where(User.telegram_id == telegram_id)
         result = await self.session.scalar(stmt)
         return result
 
-    async def get_all_users(
-            self,
-            language_code: str = None
-    ):
+    async def get_all_users(self, language_code: Optional[str] = None) -> List[User]:
         if language_code:
             stmt = select(User).where(User.language == language_code)
         else:
@@ -66,42 +44,13 @@ class UserDBRepo(BaseRepo):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def get_notifiable_user_ids(
-            self,
-            hours: str,
-            language_code: str = None,
-    ) -> List[int]:
-
-        stmt = select(User.telegram_id).join(
-            UserNotification, UserNotification.telegram_id == User.telegram_id
-        ).where(
-            and_(
-                User.is_active == True,
-                User.notifications == True,
-                UserNotification.hours == hours,
-                (User.language == language_code) if language_code else (User.language != None)
-            )
-        )
-        result = await self.session.scalars(stmt)
-        return list(result.all())
-
     async def get_users_count(self) -> int:
         stmt = select(func.count(User.telegram_id))
         result = await self.session.scalar(stmt)
         return result
 
     async def get_active_users_count(self) -> int:
-        stmt = select(func.count(User.telegram_id)).where(User.is_active == True)
-        result = await self.session.scalar(stmt)
-        return result
-
-    async def get_users_count_by_language(self, language_code: str) -> int:
-        stmt = select(func.count(User.telegram_id)).where(
-            and_(
-                User.language == language_code,
-                User.is_active == True
-            )
-        )
+        stmt = select(func.count(User.telegram_id)).where(User.is_active == 1)
         result = await self.session.scalar(stmt)
         return result
 
@@ -109,17 +58,15 @@ class UserDBRepo(BaseRepo):
             self,
             *clauses,
             **values,
-    ):
+    ) -> None:
         stmt = update(User).where(*clauses).values(**values)
         await self.session.execute(stmt)
         await self.session.commit()
 
-    async def delete_all_notifications(
-            self,
-            telegram_id: int
-    ):
-        stmt = delete(UserNotification).where(UserNotification.telegram_id == telegram_id)
+    async def delete_all_notifications(self, telegram_id: int) -> None:
+        stmt = delete(User).where(User.telegram_id == telegram_id)
         await self.session.execute(stmt)
+        await self.session.commit()
 
     async def update_user_notifications(
             self,

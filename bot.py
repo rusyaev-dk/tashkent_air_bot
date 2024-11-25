@@ -6,6 +6,7 @@ from pathlib import Path
 
 import betterlogging as bl
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from aiogram_dialog import setup_dialogs
@@ -13,6 +14,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from infrastructure.api.aqi_repo import AQIApiRepo
+from infrastructure.database.models import Base
 from infrastructure.database.setup import create_session_pool, create_engine
 from l10n.translator import TranslatorHub
 from tgbot.config import load_config, Config
@@ -50,6 +52,11 @@ def get_storage(
     else:
         return MemoryStorage()
 
+
+async def setup_database(engine):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    await engine.dispose()
 
 def setup_translator(
     locales_dir_path: str
@@ -142,7 +149,7 @@ async def main():
     aqi_api = AQIApiRepo(api_key=config.api.api_key)
     storage = get_storage(config)
 
-    bot = Bot(token=config.tg_bot.token, parse_mode="HTML")
+    bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))
 
     locales_dir_path = Path(__file__).parent.joinpath("l10n/locales")
     translator_hub = setup_translator(locales_dir_path=str(locales_dir_path))
@@ -153,17 +160,18 @@ async def main():
     dp.workflow_data.update(aqi_api=aqi_api, config=config, translator_hub=translator_hub)
 
     engine = create_engine(db=config.db)
+    await setup_database(engine)
     session_pool = create_session_pool(engine=engine)
 
     register_global_middlewares(dp=dp, translator_hub=translator_hub, session_pool=session_pool)
 
     scheduler = AsyncIOScheduler()
-    setup_scheduling(
-        scheduler=scheduler, bot=bot,
-        aqi_api=aqi_api, config=config,
-        translator_hub=translator_hub,
-        session_pool=session_pool
-    )
+    # setup_scheduling(
+    #     scheduler=scheduler, bot=bot,
+    #     aqi_api=aqi_api, config=config,
+    #     translator_hub=translator_hub,
+    #     session_pool=session_pool
+    # )
 
     await on_startup(bot, config.tg_bot.admin_ids)
     scheduler.start()
