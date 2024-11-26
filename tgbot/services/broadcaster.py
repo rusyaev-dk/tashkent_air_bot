@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from infrastructure.database.models import User
 from infrastructure.database.repository.requests import RequestsRepo
 from l10n.translator import TranslatorHub
-from tgbot.services.format_functions import format_current_aqi_info
+from tgbot.services.format_functions import format_aqi_info
 
 
 async def send_text(
@@ -255,7 +255,7 @@ async def aqi_users_notifying(
     count = 0
 
     try:
-        ru_text = format_current_aqi_info(current_aqi=current_aqi, l10n=translator_hub.l10ns.get("ru"))
+        ru_text = format_aqi_info(aqi=current_aqi, l10n=translator_hub.l10ns.get("ru"))
         for user_id in ru_users_ids:
             success = await send_text(bot=bot, user_id=user_id, text=ru_text, disable_notification=True)
             if not success[0] and success[1] == "bot_blocked":
@@ -263,7 +263,7 @@ async def aqi_users_notifying(
             count += 1
             await asyncio.sleep(0.05)
 
-        uz_text = format_current_aqi_info(current_aqi=current_aqi, l10n=translator_hub.l10ns.get("uz"))
+        uz_text = format_aqi_info(aqi=current_aqi, l10n=translator_hub.l10ns.get("uz"))
         for user_id in uz_users_ids:
             success = await send_text(bot=bot, user_id=user_id, text=uz_text, disable_notification=True)
             if not success[0] and success[1] == "bot_blocked":
@@ -271,7 +271,7 @@ async def aqi_users_notifying(
             count += 1
             await asyncio.sleep(0.05)
 
-        en_text = format_current_aqi_info(current_aqi=current_aqi, l10n=translator_hub.l10ns.get("en"))
+        en_text = format_aqi_info(aqi=current_aqi, l10n=translator_hub.l10ns.get("en"))
         for user_id in en_users_ids:
             success = await send_text(bot=bot, user_id=user_id, text=en_text, disable_notification=True)
             if not success[0] and success[1] == "bot_blocked":

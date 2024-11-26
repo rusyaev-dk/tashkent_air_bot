@@ -131,13 +131,13 @@ class Miscellaneous:
 @dataclass
 class ApiConfig:
 
-    api_key: str
+    api_token: str
 
     @staticmethod
     def from_env(env: Env):
-        api_key = env.str("API_KEY")
+        api_token = env.str("API_TOKEN")
 
-        return ApiConfig(api_key=api_key)
+        return ApiConfig(api_token=api_token)
 
 
 @dataclass

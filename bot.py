@@ -13,7 +13,9 @@ from aiogram_dialog import setup_dialogs
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from infrastructure.api.aqi_repo import AQIApiRepo
+from infrastructure.api.aqi_repo import AQIRepositoryI
+from infrastructure.clients.aqi_client import AQIClient
+from infrastructure.clients.http_client import HttpClient
 from infrastructure.database.models import Base
 from infrastructure.database.setup import create_session_pool, create_engine
 from l10n.translator import TranslatorHub
@@ -58,6 +60,7 @@ async def setup_database(engine):
         await conn.run_sync(Base.metadata.create_all)
     await engine.dispose()
 
+
 def setup_translator(
     locales_dir_path: str
 ) -> TranslatorHub:
@@ -76,9 +79,10 @@ def register_global_middlewares(
         dp: Dispatcher,
         translator_hub: TranslatorHub,
         session_pool: async_sessionmaker,
+        aqi_client: AQIClient,
 ):
-    dp.message.outer_middleware(OuterDatabaseMiddleware(session_pool))
-    dp.callback_query.outer_middleware(OuterDatabaseMiddleware(session_pool))
+    dp.message.outer_middleware(OuterDatabaseMiddleware(session_pool, aqi_client=aqi_client))
+    dp.callback_query.outer_middleware(OuterDatabaseMiddleware(session_pool, aqi_client=aqi_client))
 
     dp.message.middleware(ThrottlingMiddleware(
         default_throttle_time=DEFAULT_THROTTLE_TIME))
@@ -95,7 +99,7 @@ def register_global_middlewares(
 def setup_scheduling(
         scheduler: AsyncIOScheduler,
         bot: Bot,
-        aqi_api: AQIApiRepo,
+        aqi_api: AQIRepositoryI,
         config: Config,
         translator_hub: TranslatorHub,
         session_pool: async_sessionmaker
@@ -146,7 +150,18 @@ async def main():
     setup_logging()
 
     config = load_config(".env")
-    aqi_api = AQIApiRepo(api_key=config.api.api_key)
+
+    engine = create_engine(db=config.db)
+    await setup_database(engine)
+    session_pool = create_session_pool(engine=engine)
+
+    http_client = HttpClient()
+    aqi_client = AQIClient(
+        http_client=http_client,
+        base_url="http://api.openweathermap.org",
+        token=config.api.api_token
+    )
+
     storage = get_storage(config)
 
     bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))
@@ -157,13 +172,9 @@ async def main():
     dp = Dispatcher(storage=storage)
     dp.include_routers(*routers_list)
     setup_dialogs(dp)
-    dp.workflow_data.update(aqi_api=aqi_api, config=config, translator_hub=translator_hub)
+    dp.workflow_data.update(config=config, translator_hub=translator_hub)
 
-    engine = create_engine(db=config.db)
-    await setup_database(engine)
-    session_pool = create_session_pool(engine=engine)
-
-    register_global_middlewares(dp=dp, translator_hub=translator_hub, session_pool=session_pool)
+    register_global_middlewares(dp=dp, translator_hub=translator_hub, session_pool=session_pool, aqi_client=aqi_client)
 
     scheduler = AsyncIOScheduler()
     # setup_scheduling(

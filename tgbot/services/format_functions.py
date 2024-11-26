@@ -1,29 +1,29 @@
-from infrastructure.database.models import CurrentAQI, ForecastAQI
+from infrastructure.api.models.models import AQI
 from infrastructure.database.repository.requests import RequestsRepo
 from l10n.translator import LocalizedTranslator
 from tgbot.misc.constants import pollution_levels_emoji
 
 
-def format_current_aqi_info(
-        current_aqi: CurrentAQI,
+def format_aqi_info(
+        aqi: AQI,
         l10n: LocalizedTranslator
 ) -> str:
-    key = int(current_aqi.pm25_value // 50)
+    key = int(aqi.pm25 // 50)
     key = key if key <= 5 else 5
 
     pollution_level = l10n.get_text(key=f"pollution-level-{key}")
     pollution_level_emoji = pollution_levels_emoji[key]
     health_implications = l10n.get_text(key=f"health-implications-{key}")
 
-    date = current_aqi.relevance_date.strftime('%d').lstrip('0')
-    month_number = int(current_aqi.relevance_date.strftime('%m')) - 1
+    date = aqi.dt.strftime('%d').lstrip('0')
+    month_number = int(aqi.dt.strftime('%m')) - 1
     month = l10n.get_text(key=f"month-full-{month_number}")
-    time = current_aqi.relevance_date.strftime('%H:%M')
+    time = aqi.dt.strftime('%H:%M')
 
     args = {
-        "pm25_value": int(current_aqi.pm25_value),
-        "pm10_value": int(current_aqi.pm10_value),
-        "o3_value": str(round(current_aqi.o3_value, 1)),
+        "pm25_value": int(aqi.pm25),
+        "pm10_value": int(aqi.pm10),
+        "o3_value": str(round(aqi.o3, 1)),
         "pollution_level_emoji": pollution_level_emoji,
         "pollution_level": pollution_level,
         "health_implications": health_implications,
@@ -36,38 +36,38 @@ def format_current_aqi_info(
     return text
 
 
-def format_forecast_aqi_info(
-        forecast_list: list[ForecastAQI],
-        l10n: LocalizedTranslator
-) -> str:
-    header_text = l10n.get_text(key="forecast-aqi-header")
-    text = f"{header_text}\n"
-
-    for forecast_aqi in forecast_list:
-        key = int(forecast_aqi.pm25_forecast_value // 50)
-        key = key if key <= 5 else 5
-
-        date = forecast_aqi.forecast_date.strftime('%d').lstrip('0')
-        month_number = int(forecast_aqi.forecast_date.strftime('%m')) - 1
-        month = l10n.get_text(key=f"month-full-{month_number}")
-
-        pollution_level = l10n.get_text(key=f"pollution-level-{key}")
-        pollution_level_emoji = pollution_levels_emoji[key]
-
-        args = {
-            "date": date,
-            "month": month,
-            "pm25_forecast_value": int(forecast_aqi.pm25_forecast_value),
-            "pm10_forecast_value": int(forecast_aqi.pm10_forecast_value),
-            "o3_forecast_value": str(round(forecast_aqi.o3_forecast_value, 1)),
-            "pollution_level_emoji": pollution_level_emoji,
-            "pollution_level": pollution_level
-        }
-
-        forecast_text = l10n.get_text(key="forecast-aqi", args=args)
-        text += f"\n{forecast_text}\n"
-
-    return text
+# def format_forecast_aqi_info(
+#         forecast_list: list[ForecastAQI],
+#         l10n: LocalizedTranslator
+# ) -> str:
+#     header_text = l10n.get_text(key="forecast-aqi-header")
+#     text = f"{header_text}\n"
+#
+#     for forecast_aqi in forecast_list:
+#         key = int(forecast_aqi.pm25_forecast_value // 50)
+#         key = key if key <= 5 else 5
+#
+#         date = forecast_aqi.forecast_date.strftime('%d').lstrip('0')
+#         month_number = int(forecast_aqi.forecast_date.strftime('%m')) - 1
+#         month = l10n.get_text(key=f"month-full-{month_number}")
+#
+#         pollution_level = l10n.get_text(key=f"pollution-level-{key}")
+#         pollution_level_emoji = pollution_levels_emoji[key]
+#
+#         args = {
+#             "date": date,
+#             "month": month,
+#             "pm25_forecast_value": int(forecast_aqi.pm25_forecast_value),
+#             "pm10_forecast_value": int(forecast_aqi.pm10_forecast_value),
+#             "o3_forecast_value": str(round(forecast_aqi.o3_forecast_value, 1)),
+#             "pollution_level_emoji": pollution_level_emoji,
+#             "pollution_level": pollution_level
+#         }
+#
+#         forecast_text = l10n.get_text(key="forecast-aqi", args=args)
+#         text += f"\n{forecast_text}\n"
+#
+#     return text
 
 
 def format_reference_text(

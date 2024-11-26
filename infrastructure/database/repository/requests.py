@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.database.repository.aqi import ApiRepo
 from infrastructure.database.repository.user import UserRepo
 
 
@@ -18,7 +17,3 @@ class RequestsRepo:
     @property
     def users(self) -> UserRepo:
         return UserRepo(self.session)
-
-    @property
-    def aqi(self) -> ApiRepo:
-        return ApiRepo(self.session)

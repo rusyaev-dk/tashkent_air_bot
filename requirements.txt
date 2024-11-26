@@ -21,3 +21,4 @@ aiogram_dialog
 fluent.runtime~=0.4
 
 pytz
+dishka

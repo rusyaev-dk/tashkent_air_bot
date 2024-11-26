@@ -3,6 +3,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
 
+from infrastructure.api.aqi_repo import AQIRepositoryI
 from tgbot.filters.admin import AdminFilter
 from tgbot.keyboards.inline import set_target_language_code_kb
 from tgbot.misc.states import NotifyUsersSG
@@ -33,3 +34,11 @@ async def notify_users(
     await state.set_state(NotifyUsersSG.get_target_language_code)
 
 
+@admin_commands_router.message(Command("test"))
+async def test_cmd(
+        message: Message,
+        aqi_repo: AQIRepositoryI,
+):
+    await aqi_repo.update_aqi()
+    aqi = await aqi_repo.get_aqi()
+    await message.answer(str(aqi.aqi))
