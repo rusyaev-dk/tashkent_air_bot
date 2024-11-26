@@ -103,29 +103,29 @@ def setup_scheduling(
     now = datetime.now()
     update_run_time = get_correct_update_run_time(now=now)
 
-    scheduler.add_job(
-        func=aqi_api.update_aqi, trigger='interval',
-        minutes=SCHEDULER_AQI_INTERVAL_MINUTES, replace_existing=True,
-        start_date=update_run_time,
-        args=(bot, config, session_pool)
-    )
-
     # scheduler.add_job(
     #     func=aqi_api.update_aqi, trigger='interval',
-    #     seconds=5, replace_existing=True,
+    #     minutes=SCHEDULER_AQI_INTERVAL_MINUTES, replace_existing=True,
+    #     start_date=update_run_time,
     #     args=(bot, config, session_pool)
     # )
+
+    scheduler.add_job(
+        func=aqi_api.update_aqi, trigger='interval',
+        seconds=5, replace_existing=True,
+        args=(bot, config, session_pool)
+    )
 
     first_run_time = None
 
     if 0 < now.minute < 59:
         first_run_time = now.replace(second=30, microsecond=0, minute=59, hour=now.hour)
 
-    scheduler.add_job(
-        func=aqi_users_notifying, trigger="interval", hours=1,
-        replace_existing=True, start_date=first_run_time,
-        args=(bot, session_pool, translator_hub)
-    )
+    # scheduler.add_job(
+    #     func=aqi_users_notifying, trigger="interval", hours=1,
+    #     replace_existing=True, start_date=first_run_time,
+    #     args=(bot, session_pool, translator_hub)
+    # )
 
     # scheduler.add_job(
     #     func=aqi_users_notifying, trigger='interval', seconds=5,

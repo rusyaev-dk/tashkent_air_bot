@@ -1,14 +1,12 @@
 from typing import List
 
-from sqlalchemy import select, delete, update
-from sqlalchemy.dialects.postgresql import insert
-
+from sqlalchemy import select, delete, update, insert
 from infrastructure.api.models import AQIModel
 from infrastructure.database.models import CurrentAQI, ForecastAQI
 from infrastructure.database.repository.base import BaseRepo
 
 
-class AQIDBRepo(BaseRepo):
+class ApiRepo(BaseRepo):
     async def add_current_aqi(
             self,
             aqi_model: AQIModel
@@ -19,16 +17,9 @@ class AQIDBRepo(BaseRepo):
             pm25_value=aqi_model.iaqi.pm25,
             pm10_value=aqi_model.iaqi.pm10,
             o3_value=aqi_model.iaqi.o3
-        ).on_conflict_do_update(
-            index_elements=[CurrentAQI.request_id],
-            set_={
-                "relevance_date": aqi_model.relevance_date,
-                "pm25_value": aqi_model.iaqi.pm25,
-                "pm10_value": aqi_model.iaqi.pm10,
-                "o3_value": aqi_model.iaqi.o3
-            }
-        ).returning(CurrentAQI)
+        ).prefix_with("OR REPLACE")
         await self.session.execute(stmt)
+        await self.session.commit()
 
     async def add_forecast_aqi(
             self,
@@ -44,8 +35,9 @@ class AQIDBRepo(BaseRepo):
             }
             for forecast in aqi_model.forecast.forecast_list
         ]
-        stmt = insert(ForecastAQI).values(forecast_dicts).on_conflict_do_nothing()
+        stmt = insert(ForecastAQI).values(forecast_dicts).prefix_with("OR IGNORE")
         await self.session.execute(stmt)
+        await self.session.commit()
 
     async def get_current_aqi(self) -> CurrentAQI:
         stmt = select(CurrentAQI).order_by(CurrentAQI.created_at.desc()).limit(1)
@@ -60,6 +52,7 @@ class AQIDBRepo(BaseRepo):
     async def delete_all_forecast_aqi(self):
         stmt = delete(ForecastAQI)
         await self.session.execute(stmt)
+        await self.session.commit()
 
     async def update_current_aqi(
             self,
@@ -74,6 +67,7 @@ class AQIDBRepo(BaseRepo):
             o3_value=new_current_aqi.iaqi.o3
         )
         await self.session.execute(stmt)
+        await self.session.commit()
 
     async def update_forecast_aqi(
             self,
