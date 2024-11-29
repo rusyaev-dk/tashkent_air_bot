@@ -2,13 +2,9 @@ from typing import Callable, Dict, Any, Awaitable
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-from dishka import AsyncContainer
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from infrastructure.api.repositories.aqi_repo import AQIRepositoryI
 from infrastructure.database.models import User
 
-from infrastructure.database.repositories.users_repo import UsersRepositoryI
+from infrastructure.database.repositories.users_repo import UsersRepository
 from tgbot.keyboards.inline import set_user_language_kb
 from tgbot.misc.constants import SET_USER_LANGUAGE_TEXT
 
@@ -26,7 +22,7 @@ class UserExistingMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         container = data["dishka_container"]
-        user_repo = await container.get(UsersRepositoryI)
+        user_repo = await container.get(UsersRepository)
 
         user = await user_repo.get_user(telegram_id=event.from_user.id)
         if not user:

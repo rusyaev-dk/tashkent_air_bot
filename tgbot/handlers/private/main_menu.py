@@ -2,10 +2,11 @@ from aiogram import Router, flags, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, StartMode
+from dishka import FromDishka
 from dishka.integrations.aiogram import inject
 
-from infrastructure.api.repositories.aqi_repo import AQIRepositoryI
-from l10n.translator import LocalizedTranslator
+from infrastructure.api.repositories.aqi_repo import AQIRepository
+from l10n.translator import Translator
 from tgbot.keyboards.inline import WeekAqiForecastFactory
 from tgbot.keyboards.reply import feedback_kb
 from tgbot.misc.states import FeedbackSG, SettingsSG
@@ -16,10 +17,11 @@ menu_router = Router()
 
 @menu_router.message(F.text.in_(["Индекс качества воздуха", "Air quality index", "Havo sifati indeksi"]))
 @flags.rate_limit(key="default")
+@inject
 async def get_aqi(
         message: Message,
-        aqi_repo: AQIRepositoryI,
-        l10n: LocalizedTranslator,
+        aqi_repo: FromDishka[AQIRepository],
+        l10n: FromDishka[Translator],
         dialog_manager: DialogManager
 ):
     await dialog_manager.reset_stack()
@@ -36,7 +38,7 @@ async def get_aqi(
 @inject
 async def get_aqi_forecast(
         call: CallbackQuery,
-        l10n: LocalizedTranslator
+        l10n: FromDishka[Translator]
 ):
     # forecast_list = await repo.aqi.get_forecast_aqi()
     # if len(forecast_list) == 0:
@@ -51,9 +53,10 @@ async def get_aqi_forecast(
 
 @menu_router.message(F.text.in_(["ℹ️ Полезно", "ℹ️ Informative", "ℹ️ Ma'lumot beruvchi"]))
 @flags.rate_limit(key="default")
+@inject
 async def get_reference(
         message: Message,
-        l10n: LocalizedTranslator,
+        l10n: FromDishka[Translator],
         dialog_manager: DialogManager
 ):
     await dialog_manager.reset_stack()
@@ -75,10 +78,11 @@ async def settings(
 
 @menu_router.message(F.text.in_(["📩 Обратная связь", "📩 Feedback", "📩 Fikr-mulohaza"]))
 @flags.rate_limit(key="default")
+@inject
 async def feedback(
         message: Message,
         state: FSMContext,
-        l10n: LocalizedTranslator,
+        l10n: FromDishka[Translator],
         dialog_manager: DialogManager
 ):
     await dialog_manager.reset_stack()

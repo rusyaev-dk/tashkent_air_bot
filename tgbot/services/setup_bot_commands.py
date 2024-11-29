@@ -3,10 +3,10 @@ from typing import List
 from aiogram import Bot
 from aiogram.types import BotCommand, BotCommandScopeDefault, BotCommandScopeChat
 
-from l10n.translator import LocalizedTranslator
+from l10n.translator import Translator
 
 
-async def update_user_commands(bot: Bot, l10n: LocalizedTranslator):
+async def update_user_commands(bot: Bot, l10n: Translator):
     default_commands = [
         BotCommand(
             command="start",

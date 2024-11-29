@@ -14,8 +14,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from di.di import setup_dependencies
-from infrastructure.api.repositories.aqi_repo import AQIRepositoryI
-from l10n.translator import TranslatorHub
+from infrastructure.api.repositories.aqi_repo import AQIRepository
+from l10n.translator import Translator
 from tgbot.config import Config
 from tgbot.handlers import routers_list
 from tgbot.middlewares.database import UserExistingMiddleware
@@ -54,12 +54,12 @@ def get_storage(
 
 def setup_translator(
     locales_dir_path: str
-) -> TranslatorHub:
+) -> Translator:
 
     all_files = os.listdir(locales_dir_path + "/ru")
     fluent_files = [file for file in all_files if file.endswith(".ftl")]
 
-    translator_hub = TranslatorHub(
+    translator_hub = Translator(
         locales_dir_path=str(locales_dir_path), locales=["ru", "uz", "en"],
         resource_ids=fluent_files
     )
@@ -68,29 +68,23 @@ def setup_translator(
 
 def register_global_middlewares(
         dp: Dispatcher,
-        translator_hub: TranslatorHub,
 ):
-    # dp.message.outer_middleware(OuterDatabaseMiddleware(session_pool, aqi_client=aqi_client))
-    # dp.callback_query.outer_middleware(OuterDatabaseMiddleware(session_pool, aqi_client=aqi_client))
 
     dp.message.middleware(ThrottlingMiddleware(
         default_throttle_time=DEFAULT_THROTTLE_TIME))
 
-    # dp.message.middleware(InnerDatabaseMiddleware())
-    # dp.callback_query.middleware(InnerDatabaseMiddleware())
-
     dp.message.middleware(UserExistingMiddleware())
 
-    dp.message.middleware(L10nMiddleware(translator_hub))
-    dp.callback_query.middleware(L10nMiddleware(translator_hub))
+    dp.message.middleware(L10nMiddleware())
+    dp.callback_query.middleware(L10nMiddleware())
 
 
 def setup_scheduling(
         scheduler: AsyncIOScheduler,
         bot: Bot,
-        aqi_api: AQIRepositoryI,
+        aqi_api: AQIRepository,
         config: Config,
-        translator_hub: TranslatorHub,
+        translator_hub: Translator,
         session_pool: async_sessionmaker
 ):
     now = datetime.now()
@@ -153,11 +147,7 @@ async def main():
     setup_dialogs(dp)
     dp.workflow_data.update(config=config, translator_hub=translator_hub)
 
-    register_global_middlewares(
-        dp=dp,
-        translator_hub=translator_hub,
-    )
-
+    register_global_middlewares(dp=dp)
     # scheduler = AsyncIOScheduler()
     # setup_scheduling(
     #     scheduler=scheduler, bot=bot,

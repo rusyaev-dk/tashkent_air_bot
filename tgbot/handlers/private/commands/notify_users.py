@@ -9,8 +9,8 @@ from dishka import FromDishka
 from dishka.integrations.aiogram import inject
 
 from infrastructure.database.models import User
-from infrastructure.database.repositories.users_repo import UsersRepositoryI
-from l10n.translator import LocalizedTranslator
+from infrastructure.database.repositories.users_repo import UsersRepository
+from l10n.translator import Translator
 from tgbot.filters.admin import AdminFilter
 from tgbot.keyboards.inline import NotifyUsersApproveFactory, notify_approve_kb, NotifyUsersTargetLanguageFactory
 from tgbot.keyboards.reply import main_menu_kb
@@ -25,10 +25,11 @@ users_notify_router.message.filter(AdminFilter())
 @users_notify_router.callback_query(NotifyUsersSG.get_target_language_code, NotifyUsersTargetLanguageFactory.filter(
     F.target_language_code == "cancel"
 ))
+@inject
 async def cancel_notifying(
         call: CallbackQuery,
         state: FSMContext,
-        l10n: LocalizedTranslator,
+        l10n: FromDishka[Translator]
 ):
     await call.message.edit_text("Рассылка отменена.")
     await call.message.answer(l10n.get_text(key='main-menu'), reply_markup=main_menu_kb(l10n=l10n))
@@ -99,9 +100,9 @@ async def get_notify_media(
 async def notify_approve(
         call: CallbackQuery,
         state: FSMContext,
-        users_repo: FromDishka[UsersRepositoryI],
-        l10n: LocalizedTranslator,
+        users_repo: FromDishka[UsersRepository],
         callback_data: NotifyUsersApproveFactory,
+        l10n: FromDishka[Translator]
 ):
     approved = callback_data.approved
     await call.answer()
@@ -117,9 +118,9 @@ async def notify_approve(
     msg_type = data.get("msg_type")
     target_language_code = data.get("target_language_code")
     if target_language_code in ["ru", "uz", "en"]:
-        users = await users_repo.get_all_users(language_code=target_language_code)
+        users = await users_repo.get_users(User.language == target_language_code)
     else:
-        users = await users_repo.get_all_users()
+        users = await users_repo.get_users()
 
     if not users:
         await call.message.answer("Ошибка. Пользователи отсутствуют.")

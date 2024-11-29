@@ -1,24 +1,25 @@
 aiogram~=3.0
 environs~=9.0
 redis
-betterlogging
+betterlogging~=1.0.0
 
 # # For enabling api:
 backoff
 ujson
 yarl
-aiohttp
+aiohttp~=3.10.11
 
 # # For PostgreSQL sqlalchemy + alembic:
 sqlalchemy~=2.0
 alembic~=1.0
 aiosqlite
 
-apscheduler
-cachetools
+apscheduler~=3.11.0
+cachetools~=5.5.0
 
-aiogram_dialog
+aiogram_dialog~=2.2.0
 fluent.runtime~=0.4
 
-pytz
-dishka
+pytz~=2024.2
+dishka~=1.4.1
+typing_extensions~=4.12.2

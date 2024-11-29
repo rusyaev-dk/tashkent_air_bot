@@ -1,4 +1,4 @@
-from infrastructure.clients.http_client import HttpClient
+from infrastructure.api.clients.http_client import HttpClient
 
 
 class AQIClient:

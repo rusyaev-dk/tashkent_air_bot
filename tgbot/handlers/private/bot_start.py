@@ -7,8 +7,8 @@ from aiogram.types import Message, CallbackQuery
 from dishka import FromDishka
 from dishka.integrations.aiogram import inject
 
-from infrastructure.database.repositories.users_repo import UsersRepositoryI
-from l10n.translator import LocalizedTranslator, TranslatorHub
+from infrastructure.database.repositories.users_repo import UsersRepository
+from l10n.translator import Translator
 from tgbot.keyboards.inline import SetUserLanguageFactory
 from tgbot.keyboards.reply import main_menu_kb
 from tgbot.services.setup_bot_commands import update_user_commands
@@ -18,10 +18,11 @@ start_router = Router()
 
 @start_router.message(CommandStart())
 @flags.rate_limit(key="default")
+@inject
 async def bot_start(
         message: Message,
         state: FSMContext,
-        l10n: LocalizedTranslator
+        l10n: FromDishka[Translator]
 ):
     await state.clear()
     args = {
@@ -38,8 +39,8 @@ async def bot_start(
 async def set_user_language(
         call: CallbackQuery,
         callback_data: SetUserLanguageFactory,
-        translator_hub: TranslatorHub,
-        users_repo: FromDishka[UsersRepositoryI]
+        l10n: FromDishka[Translator],
+        users_repo: FromDishka[UsersRepository]
 ):
     language_code = callback_data.language_code
 
@@ -55,7 +56,6 @@ async def set_user_language(
     )
     await call.answer()
     await call.message.delete()
-    l10n = translator_hub.l10ns.get(language_code)
     await update_user_commands(bot=call.bot, l10n=l10n)
     args = {
         "name": html.escape(call.from_user.full_name),

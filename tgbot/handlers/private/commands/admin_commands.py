@@ -5,12 +5,11 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from dishka import FromDishka
 from dishka.integrations.aiogram import inject
 
-from infrastructure.api.repositories.aqi_repo import AQIRepositoryI
-from infrastructure.database.repositories.users_repo import UsersRepositoryI
+from infrastructure.api.repositories.aqi_repo import AQIRepository
+from infrastructure.database.repositories.users_repo import UsersRepository
 from tgbot.filters.admin import AdminFilter
 from tgbot.keyboards.inline import set_target_language_code_kb
 from tgbot.misc.states import NotifyUsersSG
-from tgbot.services.broadcaster import *
 from tgbot.services.format_functions import format_statistics_info
 
 admin_commands_router = Router()
@@ -22,7 +21,7 @@ admin_commands_router.message.filter(AdminFilter())
 @inject
 async def get_bot_statistics(
         message: Message,
-        users_repo: FromDishka[UsersRepositoryI]
+        users_repo: FromDishka[UsersRepository]
 ):
     text = await format_statistics_info(users_repo=users_repo)
     await message.answer(text)
@@ -39,9 +38,10 @@ async def notify_users(
 
 
 @admin_commands_router.message(Command("test"))
+@inject
 async def test_cmd(
         message: Message,
-        aqi_repo: AQIRepositoryI,
+        aqi_repo: FromDishka[AQIRepository],
 ):
     await aqi_repo.update_aqi()
     aqi = await aqi_repo.get_aqi()

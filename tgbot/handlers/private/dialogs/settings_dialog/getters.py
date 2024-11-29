@@ -5,8 +5,8 @@ from aiogram_dialog import DialogManager
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from infrastructure.database.repositories.users_repo import UsersRepositoryI
-from l10n.translator import LocalizedTranslator
+from infrastructure.database.repositories.users_repo import UsersRepository
+from l10n.translator import Translator
 from tgbot.services import generate_random_id
 from tgbot.services.micro_functions import find_notification_in_list
 
@@ -14,11 +14,11 @@ from tgbot.services.micro_functions import find_notification_in_list
 @inject
 async def overall_settings_getter(
         dialog_manager: DialogManager,
-        users_repo: FromDishka[UsersRepositoryI],
+        users_repo: FromDishka[UsersRepository],
+        l10n: FromDishka[Translator],
         **kwargs,
 ):
     user: AIOGRAMuser = dialog_manager.event.from_user
-    l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
 
     db_user = await users_repo.get_user(telegram_id=user.id)
     key = 'turn-notifications-off-btn' if db_user.notifications else 'turn-notifications-on-btn'
@@ -41,11 +41,11 @@ def notification_id_getter(notification: Dict) -> str:
 @inject
 async def change_notifications_getter(
         dialog_manager: DialogManager,
-        users_repo: FromDishka[UsersRepositoryI],
+        users_repo: FromDishka[UsersRepository],
+        l10n: FromDishka[Translator],
         **kwargs
 ):
     user: AIOGRAMuser = dialog_manager.event.from_user
-    l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
     chosen_notifications: List[Dict] = dialog_manager.dialog_data.get("chosen_notifications")
     made_changes_flag: bool = dialog_manager.dialog_data.get("made_changes_flag")
 
@@ -94,12 +94,12 @@ async def change_notifications_getter(
     return data
 
 
+@inject
 async def change_language_getter(
         dialog_manager: DialogManager,
+        l10n: FromDishka[Translator],
         **kwargs
 ):
-    l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
-
     data = {
         "back_btn_text": l10n.get_text(key='back-btn')
     }

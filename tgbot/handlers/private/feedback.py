@@ -4,8 +4,10 @@ from aiogram import Router, F, flags
 from aiogram.exceptions import TelegramForbiddenError
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
+from dishka import FromDishka
+from dishka.integrations.aiogram import inject
 
-from l10n.translator import LocalizedTranslator
+from l10n.translator import Translator
 from tgbot.config import Config
 from tgbot.filters.admin import AdminFilter
 from tgbot.keyboards.inline import answer_to_user_kb, FeedbackFactory
@@ -16,10 +18,11 @@ feedback_router = Router()
 
 
 @feedback_router.message(FeedbackSG.get_feedback, F.text.in_(["❌ Отмена", "❌ Cancel", "❌ Bekor qilish"]))
+@inject
 async def cancel_feedback(
         message: Message,
         state: FSMContext,
-        l10n: LocalizedTranslator
+        l10n: FromDishka[Translator]
 ):
     await message.answer(l10n.get_text(key="action-cancelled"), reply_markup=main_menu_kb(l10n=l10n))
     await state.clear()
@@ -27,11 +30,12 @@ async def cancel_feedback(
 
 @feedback_router.message(F.text, FeedbackSG.get_feedback)
 @flags.rate_limit(key="default")
+@inject
 async def send_feedback(
         message: Message,
         state: FSMContext,
         config: Config,
-        l10n: LocalizedTranslator
+        l10n: FromDishka[Translator]
 ):
     text = f"💬 Сообщение от пользователя {message.from_user.full_name}:\n\n" + message.text
     await message.bot.send_message(
@@ -49,9 +53,10 @@ async def send_feedback(
 
 @feedback_router.message(FeedbackSG.get_feedback)
 @flags.rate_limit(key="default")
+@inject
 async def incorrect_feedback_message(
         message: Message,
-        l10n: LocalizedTranslator
+        l10n: FromDishka[Translator]
 ):
     await message.answer(l10n.get_text(key="incorrect-content-type"))
 
@@ -73,10 +78,11 @@ async def answer_to_user(
 
 
 @feedback_router.message(AdminFilter(), FeedbackSG.get_answer_to_user)
+@inject
 async def get_answer_text(
         message: Message,
         state: FSMContext,
-        l10n: LocalizedTranslator
+        l10n: FromDishka[Translator]
 ):
     data = await state.get_data()
     user_id = data.get("user_id")

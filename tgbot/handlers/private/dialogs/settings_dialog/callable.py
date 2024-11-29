@@ -8,8 +8,8 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from infrastructure.database.models import User
-from infrastructure.database.repositories.users_repo import UsersRepositoryI
-from l10n.translator import LocalizedTranslator, TranslatorHub
+from infrastructure.database.repositories.users_repo import UsersRepository
+from l10n.translator import Translator
 from tgbot.keyboards.reply import main_menu_kb
 from tgbot.misc.states import SettingsSG
 from tgbot.services import generate_random_id
@@ -17,12 +17,13 @@ from tgbot.services.micro_functions import find_notification_in_list, compare_no
 from tgbot.services.setup_bot_commands import update_user_commands
 
 
+@inject
 async def close_settings(
         call: CallbackQuery,
         button: Button,
-        dialog_manager: DialogManager
+        dialog_manager: DialogManager,
+        l10n: FromDishka[Translator]
 ):
-    l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
     await call.message.delete()
     await call.message.answer(l10n.get_text(key='main-menu-msg'), reply_markup=main_menu_kb(l10n=l10n))
     await dialog_manager.done()
@@ -34,10 +35,9 @@ async def switch_user_notifications(
         call: CallbackQuery,
         button: Button,
         dialog_manager: DialogManager,
-        users_repo: FromDishka[UsersRepositoryI]
+        users_repo: FromDishka[UsersRepository],
+        l10n: FromDishka[Translator]
 ):
-    l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
-
     user_notifications = await users_repo.get_user_notifications(telegram_id=call.from_user.id)
     if not user_notifications:
         await dialog_manager.switch_to(state=SettingsSG.change_notification_time)
@@ -123,10 +123,9 @@ async def save_user_notification_settings(
         call: CallbackQuery,
         button: Button,
         dialog_manager: DialogManager,
-        users_repo: FromDishka[UsersRepositoryI]
+        users_repo: FromDishka[UsersRepository],
+        l10n: FromDishka[Translator],
 ):
-    l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
-
     chosen_notifications: List = dialog_manager.dialog_data.get("chosen_notifications")
     await users_repo.update_user_notifications(
         telegram_id=call.from_user.id,
@@ -149,9 +148,9 @@ async def change_user_language(
         call: CallbackQuery,
         button: Button,
         dialog_manager: DialogManager,
-        users_repo: FromDishka[UsersRepositoryI]
+        users_repo: FromDishka[UsersRepository]
 ):
-    translator_hub: TranslatorHub = dialog_manager.middleware_data.get("translator_hub")
+    translator_hub: Translator = dialog_manager.middleware_data.get("translator_hub")
     language_code = button.widget_id[:2]
 
     await users_repo.update_user(User.telegram_id == call.from_user.id, language=language_code)

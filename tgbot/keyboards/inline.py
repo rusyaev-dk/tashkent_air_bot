@@ -1,7 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from l10n.translator import LocalizedTranslator
+from l10n.translator import Translator
 
 
 class SettingsCallbackFactory(CallbackData, prefix="settings_dialog"):
@@ -40,7 +40,7 @@ def set_user_language_kb():
     return builder.as_markup()
 
 
-def settings_kb(notifications: bool, l10n: LocalizedTranslator):
+def settings_kb(notifications: bool, l10n: Translator):
     builder = InlineKeyboardBuilder()
 
     notification_btn_key = "turn-notifications-off-btn" if notifications else "turn-notifications-on-btn"
@@ -58,7 +58,7 @@ def settings_kb(notifications: bool, l10n: LocalizedTranslator):
     return builder.as_markup()
 
 
-def aqi_forecast_kb(l10n: LocalizedTranslator):
+def aqi_forecast_kb(l10n: Translator):
     builder = InlineKeyboardBuilder()
     builder.button(text=l10n.get_text(key="forecast-btn"),
                    callback_data=WeekAqiForecastFactory(period="week"))

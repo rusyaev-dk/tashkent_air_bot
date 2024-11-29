@@ -10,7 +10,7 @@ from aiogram.types import InlineKeyboardMarkup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from infrastructure.database.models import User
-from l10n.translator import TranslatorHub
+from l10n.translator import Translator
 from tgbot.services.format_functions import format_aqi_info
 
 

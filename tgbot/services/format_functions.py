@@ -1,13 +1,14 @@
 from infrastructure.api.models.models import AQI
+from infrastructure.database.models import User
 
-from infrastructure.database.repositories.users_repo import UsersRepositoryI
-from l10n.translator import LocalizedTranslator
+from infrastructure.database.repositories.users_repo import UsersRepository
+from l10n.translator import Translator
 from tgbot.misc.constants import pollution_levels_emoji
 
 
 def format_aqi_info(
         aqi: AQI,
-        l10n: LocalizedTranslator
+        l10n: Translator
 ) -> str:
     key = int(aqi.pm25 // 50)
     key = key if key <= 5 else 5
@@ -72,7 +73,7 @@ def format_aqi_info(
 
 
 def format_reference_text(
-        l10n: LocalizedTranslator
+        l10n: Translator
 ):
     args = {}
 
@@ -89,13 +90,15 @@ def format_reference_text(
 
 
 async def format_statistics_info(
-        users_repo: UsersRepositoryI
+        users_repo: UsersRepository
 ) -> str:
+
     total_users_count = await users_repo.get_users_count()
-    active_users_count = await users_repo.get_active_users_count()
-    ru_users_count = await users_repo.get_users_count_by_language(language_code="ru")
-    uz_users_count = await users_repo.get_users_count_by_language(language_code="uz")
-    en_users_count = await users_repo.get_users_count_by_language(language_code="en")
+    active_users_count = await users_repo.get_users_count(User.is_active == 1)
+
+    ru_users_count = await users_repo.get_users_count(User.language == "ru")
+    uz_users_count = await users_repo.get_users_count(User.language == "uz")
+    en_users_count = await users_repo.get_users_count(User.language == "en")
 
     text = (
         f"Всего пользователей: <b>{total_users_count}</b> чел.\n"
