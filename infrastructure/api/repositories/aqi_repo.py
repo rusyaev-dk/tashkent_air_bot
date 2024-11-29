@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class AQIRepositoryI(ABC):
     """
-    Interface for API repository.
+    Interface for API repositories.
     """
 
     @abstractmethod

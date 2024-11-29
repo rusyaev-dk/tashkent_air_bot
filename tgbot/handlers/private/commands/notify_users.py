@@ -5,9 +5,11 @@ import logging
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
+from dishka import FromDishka
+from dishka.integrations.aiogram import inject
 
 from infrastructure.database.models import User
-from infrastructure.database.repository.requests import RequestsRepo
+from infrastructure.database.repositories.users_repo import UsersRepositoryI
 from l10n.translator import LocalizedTranslator
 from tgbot.filters.admin import AdminFilter
 from tgbot.keyboards.inline import NotifyUsersApproveFactory, notify_approve_kb, NotifyUsersTargetLanguageFactory
@@ -93,10 +95,11 @@ async def get_notify_media(
 
 
 @users_notify_router.callback_query(NotifyUsersSG.notify_approve, NotifyUsersApproveFactory.filter())
+@inject
 async def notify_approve(
         call: CallbackQuery,
         state: FSMContext,
-        repo: RequestsRepo,
+        users_repo: FromDishka[UsersRepositoryI],
         l10n: LocalizedTranslator,
         callback_data: NotifyUsersApproveFactory,
 ):
@@ -114,9 +117,9 @@ async def notify_approve(
     msg_type = data.get("msg_type")
     target_language_code = data.get("target_language_code")
     if target_language_code in ["ru", "uz", "en"]:
-        users = await repo.users.get_all_users(language_code=target_language_code)
+        users = await users_repo.get_all_users(language_code=target_language_code)
     else:
-        users = await repo.users.get_all_users()
+        users = await users_repo.get_all_users()
 
     if not users:
         await call.message.answer("Ошибка. Пользователи отсутствуют.")
@@ -133,7 +136,7 @@ async def notify_approve(
                 success = await send_text(bot=call.bot, user_id=user.telegram_id, text=html.escape(text),
                                           disable_notification=True)
                 if not success[0] and success[1] == "bot_blocked":
-                    await repo.users.update_user(User.telegram_id == user.telegram_id, is_active=False)
+                    await users_repo.update_user(User.telegram_id == user.telegram_id, is_active=False)
                 else:
                     counter += 1
                 await asyncio.sleep(0.05)
@@ -149,7 +152,7 @@ async def notify_approve(
                 success = await send_photo(bot=call.bot, user_id=user.telegram_id, photo_id=photo_id,
                                            caption=html.escape(caption), disable_notification=True)
                 if not success[0] and success[1] == "bot_blocked":
-                    await repo.users.update_user(User.telegram_id == user.telegram_id, is_active=False)
+                    await users_repo.update_user(User.telegram_id == user.telegram_id, is_active=False)
                 else:
                     counter += 1
                 await asyncio.sleep(0.05)
@@ -165,7 +168,7 @@ async def notify_approve(
                 success = await send_document(bot=call.bot, user_id=user.telegram_id, document_id=document_id,
                                               caption=html.escape(caption), disable_notification=True)
                 if not success[0] and success[1] == "bot_blocked":
-                    await repo.users.update_user(User.telegram_id == user.telegram_id, is_active=False)
+                    await users_repo.update_user(User.telegram_id == user.telegram_id, is_active=False)
                 else:
                     counter += 1
                 await asyncio.sleep(0.05)
@@ -181,7 +184,7 @@ async def notify_approve(
                 success = await send_audio(bot=call.bot, user_id=user.telegram_id, audio_id=audio_id,
                                            caption=html.escape(caption), disable_notification=True)
                 if not success[0] and success[1] == "bot_blocked":
-                    await repo.users.update_user(User.telegram_id == user.telegram_id, is_active=False)
+                    await users_repo.update_user(User.telegram_id == user.telegram_id, is_active=False)
                 else:
                     counter += 1
                 await asyncio.sleep(0.05)
@@ -197,7 +200,7 @@ async def notify_approve(
                 success = await send_animation(bot=call.bot, user_id=user.telegram_id, animation_id=animation_id,
                                                caption=html.escape(caption), disable_notification=True)
                 if not success[0] and success[1] == "bot_blocked":
-                    await repo.users.update_user(User.telegram_id == user.telegram_id, is_active=False)
+                    await users_repo.update_user(User.telegram_id == user.telegram_id, is_active=False)
                 else:
                     counter += 1
                 await asyncio.sleep(0.05)
@@ -212,7 +215,7 @@ async def notify_approve(
                 success = await send_sticker(bot=call.bot, user_id=user.telegram_id, sticker_id=sticker_id,
                                              disable_notification=True)
                 if not success[0] and success[1] == "bot_blocked":
-                    await repo.users.update_user(User.telegram_id == user.telegram_id, is_active=False)
+                    await users_repo.update_user(User.telegram_id == user.telegram_id, is_active=False)
                 else:
                     counter += 1
                 await asyncio.sleep(0.05)

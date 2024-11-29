@@ -2,22 +2,25 @@ from typing import List, Dict
 
 from aiogram.types import User as AIOGRAMuser
 from aiogram_dialog import DialogManager
+from dishka import FromDishka
+from dishka.integrations.aiogram_dialog import inject
 
-from infrastructure.database.repository.requests import RequestsRepo
+from infrastructure.database.repositories.users_repo import UsersRepositoryI
 from l10n.translator import LocalizedTranslator
 from tgbot.services import generate_random_id
 from tgbot.services.micro_functions import find_notification_in_list
 
 
+@inject
 async def overall_settings_getter(
         dialog_manager: DialogManager,
-        **kwargs
+        users_repo: FromDishka[UsersRepositoryI],
+        **kwargs,
 ):
     user: AIOGRAMuser = dialog_manager.event.from_user
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
 
-    db_user = await repo.users.get_user(telegram_id=user.id)
+    db_user = await users_repo.get_user(telegram_id=user.id)
     key = 'turn-notifications-off-btn' if db_user.notifications else 'turn-notifications-on-btn'
 
     data = {
@@ -35,12 +38,13 @@ def notification_id_getter(notification: Dict) -> str:
     return notification.get("notification_id")
 
 
+@inject
 async def change_notifications_getter(
         dialog_manager: DialogManager,
+        users_repo: FromDishka[UsersRepositoryI],
         **kwargs
 ):
     user: AIOGRAMuser = dialog_manager.event.from_user
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
     chosen_notifications: List[Dict] = dialog_manager.dialog_data.get("chosen_notifications")
     made_changes_flag: bool = dialog_manager.dialog_data.get("made_changes_flag")
@@ -49,7 +53,7 @@ async def change_notifications_getter(
         if made_changes_flag:
             chosen_notifications = []
         else:
-            chosen_notifications = await repo.users.get_user_notifications(telegram_id=user.id)
+            chosen_notifications = await users_repo.get_user_notifications(telegram_id=user.id)
             dialog_manager.dialog_data.update(
                 chosen_notifications=chosen_notifications,
                 initial_notifications=chosen_notifications.copy(),

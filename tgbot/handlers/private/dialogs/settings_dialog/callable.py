@@ -4,9 +4,11 @@ from typing import List, Dict
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button, Select
+from dishka import FromDishka
+from dishka.integrations.aiogram_dialog import inject
 
 from infrastructure.database.models import User
-from infrastructure.database.repository.requests import RequestsRepo
+from infrastructure.database.repositories.users_repo import UsersRepositoryI
 from l10n.translator import LocalizedTranslator, TranslatorHub
 from tgbot.keyboards.reply import main_menu_kb
 from tgbot.misc.states import SettingsSG
@@ -27,26 +29,27 @@ async def close_settings(
     await dialog_manager.reset_stack()
 
 
+@inject
 async def switch_user_notifications(
         call: CallbackQuery,
         button: Button,
-        dialog_manager: DialogManager
+        dialog_manager: DialogManager,
+        users_repo: FromDishka[UsersRepositoryI]
 ):
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
 
-    user_notifications = await repo.users.get_user_notifications(telegram_id=call.from_user.id)
+    user_notifications = await users_repo.get_user_notifications(telegram_id=call.from_user.id)
     if not user_notifications:
         await dialog_manager.switch_to(state=SettingsSG.change_notification_time)
         return
 
-    user = await repo.users.get_user(telegram_id=call.from_user.id)
+    user = await users_repo.get_user(telegram_id=call.from_user.id)
     if user.notifications:
         notifications = False
     else:
         notifications = True
 
-    await repo.users.update_user(User.telegram_id == call.from_user.id, notifications=notifications)
+    await users_repo.update_user(User.telegram_id == call.from_user.id, notifications=notifications)
     text = l10n.get_text(key="notifications-enabled") if notifications else l10n.get_text(key="notifications-disabled")
 
     await call.answer(text)
@@ -115,16 +118,17 @@ async def deselect_all_user_notifications(
     )
 
 
+@inject
 async def save_user_notification_settings(
         call: CallbackQuery,
         button: Button,
         dialog_manager: DialogManager,
+        users_repo: FromDishka[UsersRepositoryI]
 ):
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
     l10n: LocalizedTranslator = dialog_manager.middleware_data.get("l10n")
 
     chosen_notifications: List = dialog_manager.dialog_data.get("chosen_notifications")
-    await repo.users.update_user_notifications(
+    await users_repo.update_user_notifications(
         telegram_id=call.from_user.id,
         notifications=chosen_notifications
     )
@@ -140,16 +144,17 @@ async def cancel_notification_setting(
     dialog_manager.dialog_data.clear()
 
 
+@inject
 async def change_user_language(
         call: CallbackQuery,
         button: Button,
         dialog_manager: DialogManager,
+        users_repo: FromDishka[UsersRepositoryI]
 ):
     translator_hub: TranslatorHub = dialog_manager.middleware_data.get("translator_hub")
-    repo: RequestsRepo = dialog_manager.middleware_data.get("repo")
     language_code = button.widget_id[:2]
 
-    await repo.users.update_user(User.telegram_id == call.from_user.id, language=language_code)
+    await users_repo.update_user(User.telegram_id == call.from_user.id, language=language_code)
     l10n = translator_hub.l10ns.get(language_code)
 
     await dialog_manager.done()

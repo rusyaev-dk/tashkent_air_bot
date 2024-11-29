@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy import insert, select, delete
 
 from infrastructure.api.aqi_converter import AqiConverter
-from infrastructure.api.aqi_repo import AQIRepositoryI
+from infrastructure.api.repositories.aqi_repo import AQIRepositoryI
 from infrastructure.api.exceptions import ApiException
 from infrastructure.api.models.models import AQI
 from infrastructure.clients.aqi_client import AQIClient

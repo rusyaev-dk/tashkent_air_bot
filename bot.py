@@ -13,22 +13,19 @@ from aiogram_dialog import setup_dialogs
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from infrastructure.api.aqi_repo import AQIRepositoryI
-from infrastructure.clients.aqi_client import AQIClient
-from infrastructure.clients.http_client import HttpClient
-from infrastructure.database.models import Base
-from infrastructure.database.setup import create_session_pool, create_engine
+from di.di import setup_dependencies
+from infrastructure.api.repositories.aqi_repo import AQIRepositoryI
 from l10n.translator import TranslatorHub
-from tgbot.config import load_config, Config
+from tgbot.config import Config
 from tgbot.handlers import routers_list
-from tgbot.middlewares.database import OuterDatabaseMiddleware, InnerDatabaseMiddleware, UserExistingMiddleware
+from tgbot.middlewares.database import UserExistingMiddleware
 from tgbot.middlewares.l10n import L10nMiddleware
 from tgbot.middlewares.throttling import ThrottlingMiddleware
-from tgbot.misc.constants import SCHEDULER_AQI_INTERVAL_MINUTES, DEFAULT_THROTTLE_TIME
+from tgbot.misc.constants import DEFAULT_THROTTLE_TIME
 from tgbot.services import broadcaster
-from tgbot.services.broadcaster import aqi_users_notifying
 from tgbot.services.micro_functions import get_correct_update_run_time
 from tgbot.services.setup_bot_commands import setup_admin_commands
+from dishka.integrations.aiogram import setup_dishka
 
 
 def setup_logging():
@@ -55,12 +52,6 @@ def get_storage(
         return MemoryStorage()
 
 
-async def setup_database(engine):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    await engine.dispose()
-
-
 def setup_translator(
     locales_dir_path: str
 ) -> TranslatorHub:
@@ -78,17 +69,15 @@ def setup_translator(
 def register_global_middlewares(
         dp: Dispatcher,
         translator_hub: TranslatorHub,
-        session_pool: async_sessionmaker,
-        aqi_client: AQIClient,
 ):
-    dp.message.outer_middleware(OuterDatabaseMiddleware(session_pool, aqi_client=aqi_client))
-    dp.callback_query.outer_middleware(OuterDatabaseMiddleware(session_pool, aqi_client=aqi_client))
+    # dp.message.outer_middleware(OuterDatabaseMiddleware(session_pool, aqi_client=aqi_client))
+    # dp.callback_query.outer_middleware(OuterDatabaseMiddleware(session_pool, aqi_client=aqi_client))
 
     dp.message.middleware(ThrottlingMiddleware(
         default_throttle_time=DEFAULT_THROTTLE_TIME))
 
-    dp.message.middleware(InnerDatabaseMiddleware())
-    dp.callback_query.middleware(InnerDatabaseMiddleware())
+    # dp.message.middleware(InnerDatabaseMiddleware())
+    # dp.callback_query.middleware(InnerDatabaseMiddleware())
 
     dp.message.middleware(UserExistingMiddleware())
 
@@ -149,18 +138,8 @@ async def on_startup(
 async def main():
     setup_logging()
 
-    config = load_config(".env")
-
-    engine = create_engine(db=config.db)
-    await setup_database(engine)
-    session_pool = create_session_pool(engine=engine)
-
-    http_client = HttpClient()
-    aqi_client = AQIClient(
-        http_client=http_client,
-        base_url="http://api.openweathermap.org",
-        token=config.api.api_token
-    )
+    container = setup_dependencies()
+    config = await container.get(Config)
 
     storage = get_storage(config)
 
@@ -174,9 +153,12 @@ async def main():
     setup_dialogs(dp)
     dp.workflow_data.update(config=config, translator_hub=translator_hub)
 
-    register_global_middlewares(dp=dp, translator_hub=translator_hub, session_pool=session_pool, aqi_client=aqi_client)
+    register_global_middlewares(
+        dp=dp,
+        translator_hub=translator_hub,
+    )
 
-    scheduler = AsyncIOScheduler()
+    # scheduler = AsyncIOScheduler()
     # setup_scheduling(
     #     scheduler=scheduler, bot=bot,
     #     aqi_api=aqi_api, config=config,
@@ -185,12 +167,17 @@ async def main():
     # )
 
     await on_startup(bot, config.tg_bot.admin_ids)
-    scheduler.start()
-    await dp.start_polling(bot)
+    # scheduler.start()
+    setup_dishka(container=container, router=dp)
+
+    try:
+        await dp.start_polling(bot)
+    except (KeyboardInterrupt, SystemExit):
+        logging.error("Stopping bot")
+    finally:
+        await container.close()
+        await bot.session.close()
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        logging.error("Stopping bot")
+    asyncio.run(main())

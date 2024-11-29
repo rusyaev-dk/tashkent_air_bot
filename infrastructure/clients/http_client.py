@@ -26,3 +26,7 @@ class HttpClient:
         Закрывает HTTP-сессию.
         """
         await self.session.close()
+
+    # def __del__(self):
+    #     self.session.close()
+    #     print('session closed')

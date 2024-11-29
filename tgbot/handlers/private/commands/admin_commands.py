@@ -2,8 +2,11 @@ from aiogram import Router, flags
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
+from dishka import FromDishka
+from dishka.integrations.aiogram import inject
 
-from infrastructure.api.aqi_repo import AQIRepositoryI
+from infrastructure.api.repositories.aqi_repo import AQIRepositoryI
+from infrastructure.database.repositories.users_repo import UsersRepositoryI
 from tgbot.filters.admin import AdminFilter
 from tgbot.keyboards.inline import set_target_language_code_kb
 from tgbot.misc.states import NotifyUsersSG
@@ -16,11 +19,12 @@ admin_commands_router.message.filter(AdminFilter())
 
 @admin_commands_router.message(Command("statistics"))
 @flags.rate_limit(key="default")
+@inject
 async def get_bot_statistics(
         message: Message,
-        repo: RequestsRepo
+        users_repo: FromDishka[UsersRepositoryI]
 ):
-    text = await format_statistics_info(repo=repo)
+    text = await format_statistics_info(users_repo=users_repo)
     await message.answer(text)
 
 

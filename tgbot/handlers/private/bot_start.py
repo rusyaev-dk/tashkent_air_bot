@@ -4,8 +4,10 @@ from aiogram import Router, flags
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
+from dishka import FromDishka
+from dishka.integrations.aiogram import inject
 
-from infrastructure.database.repository.requests import RequestsRepo
+from infrastructure.database.repositories.users_repo import UsersRepositoryI
 from l10n.translator import LocalizedTranslator, TranslatorHub
 from tgbot.keyboards.inline import SetUserLanguageFactory
 from tgbot.keyboards.reply import main_menu_kb
@@ -32,19 +34,20 @@ async def bot_start(
 
 
 @start_router.callback_query(SetUserLanguageFactory.filter())
+@inject
 async def set_user_language(
         call: CallbackQuery,
-        repo: RequestsRepo,
         callback_data: SetUserLanguageFactory,
         translator_hub: TranslatorHub,
+        users_repo: FromDishka[UsersRepositoryI]
 ):
     language_code = callback_data.language_code
 
-    user = await repo.users.get_user(telegram_id=call.from_user.id)
+    user = await users_repo.get_user(telegram_id=call.from_user.id)
     if not user:
-        await repo.users.setup_default_user_notifications(telegram_id=call.from_user.id)
+        await users_repo.setup_default_user_notifications(telegram_id=call.from_user.id)
 
-    await repo.users.add_user(
+    await users_repo.add_user(
         telegram_id=call.from_user.id,
         full_name=call.from_user.full_name,
         language=language_code,

@@ -2,11 +2,11 @@ from aiogram import Router, flags, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager, StartMode
+from dishka.integrations.aiogram import inject
 
-from infrastructure.api.aqi_repo import AQIRepositoryI
-from infrastructure.database.repository.requests import RequestsRepo
+from infrastructure.api.repositories.aqi_repo import AQIRepositoryI
 from l10n.translator import LocalizedTranslator
-from tgbot.keyboards.inline import aqi_forecast_kb, WeekAqiForecastFactory
+from tgbot.keyboards.inline import WeekAqiForecastFactory
 from tgbot.keyboards.reply import feedback_kb
 from tgbot.misc.states import FeedbackSG, SettingsSG
 from tgbot.services.format_functions import format_aqi_info, format_reference_text
@@ -33,9 +33,9 @@ async def get_aqi(
 
 
 @menu_router.callback_query(WeekAqiForecastFactory.filter())
+@inject
 async def get_aqi_forecast(
         call: CallbackQuery,
-        repo: RequestsRepo,
         l10n: LocalizedTranslator
 ):
     # forecast_list = await repo.aqi.get_forecast_aqi()

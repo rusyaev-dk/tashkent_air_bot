@@ -1,5 +1,6 @@
 from infrastructure.api.models.models import AQI
-from infrastructure.database.repository.requests import RequestsRepo
+
+from infrastructure.database.repositories.users_repo import UsersRepositoryI
 from l10n.translator import LocalizedTranslator
 from tgbot.misc.constants import pollution_levels_emoji
 
@@ -88,13 +89,13 @@ def format_reference_text(
 
 
 async def format_statistics_info(
-        repo: RequestsRepo
+        users_repo: UsersRepositoryI
 ) -> str:
-    total_users_count = await repo.users.get_users_count()
-    active_users_count = await repo.users.get_active_users_count()
-    ru_users_count = await repo.users.get_users_count_by_language(language_code="ru")
-    uz_users_count = await repo.users.get_users_count_by_language(language_code="uz")
-    en_users_count = await repo.users.get_users_count_by_language(language_code="en")
+    total_users_count = await users_repo.get_users_count()
+    active_users_count = await users_repo.get_active_users_count()
+    ru_users_count = await users_repo.get_users_count_by_language(language_code="ru")
+    uz_users_count = await users_repo.get_users_count_by_language(language_code="uz")
+    en_users_count = await users_repo.get_users_count_by_language(language_code="en")
 
     text = (
         f"Всего пользователей: <b>{total_users_count}</b> чел.\n"

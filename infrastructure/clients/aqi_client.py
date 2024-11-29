@@ -4,7 +4,7 @@ from infrastructure.clients.http_client import HttpClient
 class AQIClient:
     def __init__(self, http_client: HttpClient, base_url: str, token: str):
         """
-        Initializes the API repository implementation.
+        Initializes the API repositories implementation.
 
         :param http_client: The HTTP client instance for making requests.
         :param base_url: The base URL of the API.

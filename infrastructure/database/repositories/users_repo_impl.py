@@ -2,12 +2,18 @@ from typing import Optional, List, Dict
 
 from sqlalchemy import select, func, update, delete
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.database.models import User, UserNotification
-from infrastructure.database.repository.base import BaseRepo
+
+from infrastructure.database.repositories.users_repo import UsersRepositoryI
 
 
-class UserRepo(BaseRepo):
+class UsersRepository(UsersRepositoryI):
+
+    def __init__(self, session: AsyncSession):
+        self.__session = session
+
     async def add_user(
             self,
             telegram_id: int,
@@ -21,38 +27,38 @@ class UserRepo(BaseRepo):
             language=language,
             username=username
         ).returning(User)
-        result = await self.session.execute(stmt)
-        await self.session.commit()
+        result = await self.__session.execute(stmt)
+        await self.__session.commit()
         return result.scalar_one()
 
     async def get_user(self, telegram_id: int) -> Optional[User]:
         stmt = select(User).where(User.telegram_id == telegram_id)
-        result = await self.session.scalar(stmt)
+        result = await self.__session.scalar(stmt)
         return result
 
     async def get_user_language_code(self, telegram_id: int) -> str:
         stmt = select(User.language).where(User.telegram_id == telegram_id)
-        result = await self.session.scalar(stmt)
+        result = await self.__session.scalar(stmt)
         return result
 
     async def get_all_users(self) -> List[User]:
         stmt = select(User)
-        result = await self.session.execute(stmt)
+        result = await self.__session.execute(stmt)
         return result.scalars().all()
 
     async def get_users_count_by_language(self, language_code: str) -> int:
         stmt = select(User).where(User.language == language_code)
-        result = await self.session.execute(stmt)
+        result = await self.__session.execute(stmt)
         return len(result.scalars().all())
 
     async def get_users_count(self) -> int:
         stmt = select(func.count(User.telegram_id))
-        result = await self.session.scalar(stmt)
+        result = await self.__session.scalar(stmt)
         return result
 
     async def get_active_users_count(self) -> int:
         stmt = select(func.count(User.telegram_id)).where(User.is_active == 1)
-        result = await self.session.scalar(stmt)
+        result = await self.__session.scalar(stmt)
         return result
 
     async def update_user(
@@ -61,13 +67,13 @@ class UserRepo(BaseRepo):
             **values,
     ) -> None:
         stmt = update(User).where(*clauses).values(**values)
-        await self.session.execute(stmt)
-        await self.session.commit()
+        await self.__session.execute(stmt)
+        await self.__session.commit()
 
     async def delete_all_notifications(self, telegram_id: int) -> None:
         stmt = delete(UserNotification).where(UserNotification.telegram_id == telegram_id)
-        await self.session.execute(stmt)
-        await self.session.commit()
+        await self.__session.execute(stmt)
+        await self.__session.commit()
 
     async def update_user_notifications(
         self,
@@ -88,17 +94,17 @@ class UserRepo(BaseRepo):
             ]
 
             stmt = insert(UserNotification).values(notification_time_dicts)
-            await self.session.execute(stmt)
+            await self.__session.execute(stmt)
 
         await self.update_user(
             User.telegram_id == telegram_id,
             notifications=int(bool(notifications)),
         )
-        await self.session.commit()
+        await self.__session.commit()
 
     async def get_user_notifications(self, telegram_id: int) -> List[Dict]:
         stmt = select(UserNotification).where(UserNotification.telegram_id == telegram_id)
-        result = await self.session.execute(stmt)
+        result = await self.__session.execute(stmt)
 
         user_notifications = []
         for notification in result.scalars().all():
