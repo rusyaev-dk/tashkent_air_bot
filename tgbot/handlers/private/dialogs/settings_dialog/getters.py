@@ -16,7 +16,7 @@ async def overall_settings_getter(
         dialog_manager: DialogManager,
         users_repo: FromDishka[UsersRepository],
         l10n: FromDishka[Translator],
-        **kwargs,
+        **kwargs
 ):
     user: AIOGRAMuser = dialog_manager.event.from_user
 

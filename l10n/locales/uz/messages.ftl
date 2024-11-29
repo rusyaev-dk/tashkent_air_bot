@@ -42,10 +42,12 @@ reference =
 current-aqi =
     { $pollution_level_emoji } <b>{ $pollution_level }.</b> { $health_implications }
 
-    <b>Havo sifati indeksi:</b>
-    - PM2.5: <b>{ $pm25_value }</b>
-    - PM10: <b>{ $pm10_value }</b>
-    - o3: <b>{ $o3_value }</b>
+    <b>Havo sifati indeksi: { $aqi } </b>
+
+    <b>Ifloslantiruvchi moddalar (μg/m3):</b>
+    - PM2.5: <b>{ $pm25 }</b>
+    - PM10: <b>{ $pm10 }</b>
+    - o3: <b>{ $o3 }</b>
 
     ⏳ <b>Yangilangan: { $date } { $month }, { $time }</b>
 

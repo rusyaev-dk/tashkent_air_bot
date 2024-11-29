@@ -12,7 +12,7 @@ class AQI:
         o3: float,
         lat: float,
         lon: float,
-        dt: datetime,
+        date: datetime,
     ):
         self.pm10 = pm10
         self.pm25 = pm25
@@ -20,7 +20,7 @@ class AQI:
         self.aqi = aqi
         self.lat = lat
         self.lon = lon
-        self.dt = dt
+        self.date = date
 
     @classmethod
     def from_local(cls, local: AQILocal) -> 'AQI':
@@ -31,5 +31,5 @@ class AQI:
             o3=local.o3,
             lat=local.lat,
             lon=local.lon,
-            dt=local.date,
+            date=local.date,
         )

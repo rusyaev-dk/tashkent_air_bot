@@ -91,7 +91,7 @@ class ServiceProvider(Provider):
         fluent_files = [file for file in all_files if file.endswith(".ftl")]
 
         translator = Translator(
-            locales_dir_path=str(self.__locales_dir_path), locales=["ru", "uz", "en"],
+            locales_dir_path=str(self.__locales_dir_path), locales=["ru", "uz", "en", "uz_cyrl"],
             resource_ids=fluent_files
         )
         return translator

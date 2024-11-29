@@ -30,7 +30,9 @@ async def bot_start(
         "terms_of_use": f"<a href='{l10n.get_text(key='terms-of-use-link')}'>"
                         f"<b>{l10n.get_text(key='terms-of-use-name')}</b></a>"
     }
+
     text = l10n.get_text(key="hello", args=args)
+
     await message.answer(text, reply_markup=main_menu_kb(l10n=l10n), disable_web_page_preview=True)
 
 
@@ -54,6 +56,7 @@ async def set_user_language(
         language=language_code,
         username=call.from_user.username,
     )
+    l10n.change_locale(language_code)
     await call.answer()
     await call.message.delete()
     await update_user_commands(bot=call.bot, l10n=l10n)

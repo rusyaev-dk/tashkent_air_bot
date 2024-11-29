@@ -1,8 +1,6 @@
 import asyncio
 import logging
-import os
 from datetime import datetime
-from pathlib import Path
 
 import betterlogging as bl
 from aiogram import Bot, Dispatcher
@@ -52,24 +50,9 @@ def get_storage(
         return MemoryStorage()
 
 
-def setup_translator(
-    locales_dir_path: str
-) -> Translator:
-
-    all_files = os.listdir(locales_dir_path + "/ru")
-    fluent_files = [file for file in all_files if file.endswith(".ftl")]
-
-    translator_hub = Translator(
-        locales_dir_path=str(locales_dir_path), locales=["ru", "uz", "en"],
-        resource_ids=fluent_files
-    )
-    return translator_hub
-
-
 def register_global_middlewares(
         dp: Dispatcher,
 ):
-
     dp.message.middleware(ThrottlingMiddleware(
         default_throttle_time=DEFAULT_THROTTLE_TIME))
 
@@ -139,25 +122,14 @@ async def main():
 
     bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))
 
-    locales_dir_path = Path(__file__).parent.joinpath("l10n/locales")
-    translator_hub = setup_translator(locales_dir_path=str(locales_dir_path))
-
     dp = Dispatcher(storage=storage)
     dp.include_routers(*routers_list)
     setup_dialogs(dp)
-    dp.workflow_data.update(config=config, translator_hub=translator_hub)
 
     register_global_middlewares(dp=dp)
-    # scheduler = AsyncIOScheduler()
-    # setup_scheduling(
-    #     scheduler=scheduler, bot=bot,
-    #     aqi_api=aqi_api, config=config,
-    #     translator_hub=translator_hub,
-    #     session_pool=session_pool
-    # )
+    dp.workflow_data.update(config=config)
 
     await on_startup(bot, config.tg_bot.admin_ids)
-    # scheduler.start()
     setup_dishka(container=container, router=dp)
 
     try:

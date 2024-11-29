@@ -17,15 +17,16 @@ def format_aqi_info(
     pollution_level_emoji = pollution_levels_emoji[key]
     health_implications = l10n.get_text(key=f"health-implications-{key}")
 
-    date = aqi.dt.strftime('%d').lstrip('0')
-    month_number = int(aqi.dt.strftime('%m')) - 1
+    date = aqi.date.strftime('%d').lstrip('0')
+    month_number = int(aqi.date.strftime('%m')) - 1
     month = l10n.get_text(key=f"month-full-{month_number}")
-    time = aqi.dt.strftime('%H:%M')
+    time = aqi.date.strftime('%H:%M')
 
     args = {
-        "pm25_value": int(aqi.pm25),
-        "pm10_value": int(aqi.pm10),
-        "o3_value": str(round(aqi.o3, 1)),
+        "aqi": int(aqi.aqi),
+        "pm25": int(aqi.pm25),
+        "pm10": int(aqi.pm10),
+        "o3": str(round(aqi.o3, 1)),
         "pollution_level_emoji": pollution_level_emoji,
         "pollution_level": pollution_level,
         "health_implications": health_implications,

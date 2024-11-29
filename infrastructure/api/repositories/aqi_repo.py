@@ -1,17 +1,15 @@
 import logging
-from datetime import datetime, timezone
+
 from typing import Optional
 
 from sqlalchemy import insert, select, delete
 
-from infrastructure.api.aqi_converter import AqiConverter
 from infrastructure.api.exceptions import ApiException
 from infrastructure.api.models.models import AQI
 from infrastructure.api.clients.aqi_client import AQIClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.database.models.aqi import AQILocal
-from tgbot.services import generate_random_id
 
 
 class AQIRepository:
@@ -37,29 +35,15 @@ class AQIRepository:
         if not response:
             return
 
-        pollutants = response["list"][0]["components"]
-        aqi_usa: int = AqiConverter.convert_to_usa_aqi(pollutants)[0]  # returns tuple with detailed dict
+        local = AQILocal.from_json(json=response)
+        await self.__rewrite_aqi(local=local)
 
-        request_id = generate_random_id(length=15)
-        timestamp = response["list"][0]["dt"]
-
-        date = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-
+    async def __rewrite_aqi(self, local: AQILocal):
         stmt = delete(AQILocal)
         await self.__session.execute(stmt)
 
-        stmt = insert(AQILocal).values(
-            request_id=request_id,
-            aqi=aqi_usa,
-            pm25=pollutants.get("pm2_5", 0.0),
-            pm10=pollutants.get("pm10", 0.0),
-            o3=pollutants.get("o3", 0.0),
-            lat=lat,
-            lon=lon,
-            date=date
-        ).prefix_with("OR REPLACE")
+        stmt = insert(AQILocal).values(local.__dict__).prefix_with("OR REPLACE")
         await self.__session.execute(stmt)
-
         await self.__session.commit()
 
     async def __request_aqi(self, lat: float, lon: float) -> Optional[dict]:

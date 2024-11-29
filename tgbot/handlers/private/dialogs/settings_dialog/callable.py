@@ -59,7 +59,7 @@ async def change_user_notification_time(
         call: CallbackQuery,
         select: Select,
         dialog_manager: DialogManager,
-        notification_id: str,
+        notification_id: str
 ):
     selected_hours = notification_id[:2]
 
@@ -93,7 +93,7 @@ async def change_user_notification_time(
 async def deselect_all_user_notifications(
         call: CallbackQuery,
         button: Button,
-        dialog_manager: DialogManager,
+        dialog_manager: DialogManager
 ):
     initial_notifications: List[Dict] = dialog_manager.dialog_data.get("initial_notifications")
     initial_notifications_copy: List[Dict] = dialog_manager.dialog_data.get("initial_notifications_copy")
@@ -124,7 +124,7 @@ async def save_user_notification_settings(
         button: Button,
         dialog_manager: DialogManager,
         users_repo: FromDishka[UsersRepository],
-        l10n: FromDishka[Translator],
+        l10n: FromDishka[Translator]
 ):
     chosen_notifications: List = dialog_manager.dialog_data.get("chosen_notifications")
     await users_repo.update_user_notifications(
@@ -148,13 +148,13 @@ async def change_user_language(
         call: CallbackQuery,
         button: Button,
         dialog_manager: DialogManager,
-        users_repo: FromDishka[UsersRepository]
+        users_repo: FromDishka[UsersRepository],
+        l10n: FromDishka[Translator]
 ):
-    translator_hub: Translator = dialog_manager.middleware_data.get("translator_hub")
     language_code = button.widget_id[:2]
+    l10n.change_locale(language_code)
 
     await users_repo.update_user(User.telegram_id == call.from_user.id, language=language_code)
-    l10n = translator_hub.l10ns.get(language_code)
 
     await dialog_manager.done()
     await dialog_manager.reset_stack()
