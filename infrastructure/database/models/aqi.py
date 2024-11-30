@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from infrastructure.api.aqi_converter import AqiConverter
 from infrastructure.database.models import Base
 from infrastructure.database.models.base import TimestampMixin
+from tgbot.services import generate_random_id
 
 
 class AQILocal(Base, TimestampMixin):
@@ -43,6 +44,7 @@ class AQILocal(Base, TimestampMixin):
         coord = json["coord"]
 
         return cls(
+            request_id=generate_random_id(15),
             aqi=aqi_usa,
             pm25=pollutants.get("pm2_5", 0.0),
             pm10=pollutants.get("pm10", 0.0),

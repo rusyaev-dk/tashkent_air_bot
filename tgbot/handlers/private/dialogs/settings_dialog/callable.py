@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.kbd import Button, Select
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
-from infrastructure.database.models import User
+from infrastructure.database.models import UserLocal
 from infrastructure.database.repositories.users_repo import UsersRepository
 from l10n.translator import Translator
 from tgbot.keyboards.reply import main_menu_kb
@@ -49,7 +49,7 @@ async def switch_user_notifications(
     else:
         notifications = True
 
-    await users_repo.update_user(User.telegram_id == call.from_user.id, notifications=notifications)
+    await users_repo.update_user(UserLocal.telegram_id == call.from_user.id, notifications=notifications)
     text = l10n.get_text(key="notifications-enabled") if notifications else l10n.get_text(key="notifications-disabled")
 
     await call.answer(text)
@@ -154,7 +154,7 @@ async def change_user_language(
     language_code = button.widget_id[:2]
     l10n.change_locale(language_code)
 
-    await users_repo.update_user(User.telegram_id == call.from_user.id, language=language_code)
+    await users_repo.update_user(UserLocal.telegram_id == call.from_user.id, language=language_code)
 
     await dialog_manager.done()
     await dialog_manager.reset_stack()

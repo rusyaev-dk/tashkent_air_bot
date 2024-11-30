@@ -2,7 +2,7 @@ import logging
 
 from typing import Optional
 
-from sqlalchemy import insert, select, delete
+from sqlalchemy import insert, select, update
 
 from infrastructure.api.exceptions import ApiException
 from infrastructure.api.models.models import AQI
@@ -31,19 +31,20 @@ class AQIRepository:
         lat = self.__default_lat if not lat else lat
         lon = self.__default_lon if not lon else lon
 
-        response = await self.__request_aqi(lat, lon)
-        if not response:
+        json = await self.__request_aqi(lat, lon)
+        if not json:
             return
 
-        local = AQILocal.from_json(json=response)
-        await self.__rewrite_aqi(local=local)
+        aqi_local = AQILocal.from_json(json)
+        aqi_local.__dict__.pop('_sa_instance_state')
 
-    async def __rewrite_aqi(self, local: AQILocal):
-        stmt = delete(AQILocal)
-        await self.__session.execute(stmt)
-
-        stmt = insert(AQILocal).values(local.__dict__).prefix_with("OR REPLACE")
-        await self.__session.execute(stmt)
+        prev_aqi = await self.get_aqi()
+        if prev_aqi:
+            stmt = update(AQILocal).values(aqi_local.__dict__)
+            await self.__session.execute(stmt)
+        else:
+            stmt = insert(AQILocal).values(aqi_local.__dict__)
+            await self.__session.execute(stmt)
         await self.__session.commit()
 
     async def __request_aqi(self, lat: float, lon: float) -> Optional[dict]:

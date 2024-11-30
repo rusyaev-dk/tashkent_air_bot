@@ -4,7 +4,7 @@ from sqlalchemy import select, func, update, delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.database.models import User, UserNotification
+from infrastructure.database.models import UserLocal, UserNotification
 
 
 class UsersRepository:
@@ -17,34 +17,34 @@ class UsersRepository:
             full_name: str,
             language: str,
             username: Optional[str] = None,
-    ) -> User:
-        stmt = insert(User).values(
+    ) -> UserLocal:
+        stmt = insert(UserLocal).values(
             telegram_id=telegram_id,
             full_name=full_name,
             language=language,
             username=username
-        ).returning(User)
+        ).returning(UserLocal)
         result = await self.__session.execute(stmt)
         await self.__session.commit()
         return result.scalar_one()
 
-    async def get_user(self, telegram_id: int) -> Optional[User]:
-        stmt = select(User).where(User.telegram_id == telegram_id)
+    async def get_user(self, telegram_id: int) -> Optional[UserLocal]:
+        stmt = select(UserLocal).where(UserLocal.telegram_id == telegram_id)
         result = await self.__session.scalar(stmt)
         return result
 
     async def get_user_language_code(self, telegram_id: int) -> str:
-        stmt = select(User.language).where(User.telegram_id == telegram_id)
+        stmt = select(UserLocal.language).where(UserLocal.telegram_id == telegram_id)
         result = await self.__session.scalar(stmt)
         return result
 
-    async def get_users(self, *clauses) -> List[User]:
-        stmt = select(User).where(*clauses)
+    async def get_users(self, *clauses) -> List[UserLocal]:
+        stmt = select(UserLocal).where(*clauses)
         result = await self.__session.execute(stmt)
         return result.scalars().all()
 
     async def get_users_count(self, *clauses) -> int:
-        stmt = select(func.count(User.telegram_id)).where(*clauses)
+        stmt = select(func.count(UserLocal.telegram_id)).where(*clauses)
         result = await self.__session.scalar(stmt)
         return result or 0
 
@@ -53,7 +53,7 @@ class UsersRepository:
             *clauses,
             **values,
     ) -> None:
-        stmt = update(User).where(*clauses).values(**values)
+        stmt = update(UserLocal).where(*clauses).values(**values)
         await self.__session.execute(stmt)
         await self.__session.commit()
 
@@ -84,7 +84,7 @@ class UsersRepository:
             await self.__session.execute(stmt)
 
         await self.update_user(
-            User.telegram_id == telegram_id,
+            UserLocal.telegram_id == telegram_id,
             notifications=int(bool(notifications)),
         )
         await self.__session.commit()

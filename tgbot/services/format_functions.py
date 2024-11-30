@@ -1,5 +1,5 @@
 from infrastructure.api.models.models import AQI
-from infrastructure.database.models import User
+from infrastructure.database.models import UserLocal
 
 from infrastructure.database.repositories.users_repo import UsersRepository
 from l10n.translator import Translator
@@ -95,11 +95,11 @@ async def format_statistics_info(
 ) -> str:
 
     total_users_count = await users_repo.get_users_count()
-    active_users_count = await users_repo.get_users_count(User.is_active == 1)
+    active_users_count = await users_repo.get_users_count(UserLocal.is_active == 1)
 
-    ru_users_count = await users_repo.get_users_count(User.language == "ru")
-    uz_users_count = await users_repo.get_users_count(User.language == "uz")
-    en_users_count = await users_repo.get_users_count(User.language == "en")
+    ru_users_count = await users_repo.get_users_count(UserLocal.language == "ru")
+    uz_users_count = await users_repo.get_users_count(UserLocal.language == "uz")
+    en_users_count = await users_repo.get_users_count(UserLocal.language == "en")
 
     text = (
         f"Всего пользователей: <b>{total_users_count}</b> чел.\n"

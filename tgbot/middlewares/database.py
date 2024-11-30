@@ -2,7 +2,7 @@ from typing import Callable, Dict, Any, Awaitable
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-from infrastructure.database.models import User
+from infrastructure.database.models import UserLocal
 
 from infrastructure.database.repositories.users_repo import UsersRepository
 from tgbot.keyboards.inline import set_user_language_kb
@@ -29,6 +29,6 @@ class UserExistingMiddleware(BaseMiddleware):
             await event.answer(SET_USER_LANGUAGE_TEXT, reply_markup=set_user_language_kb())
             return
         if not user.is_active:
-            await user_repo.update_user(User.telegram_id == event_from_user.id, is_active=True)
+            await user_repo.update_user(UserLocal.telegram_id == event_from_user.id, is_active=True)
         data["user"] = user
         return await handler(event, data)
