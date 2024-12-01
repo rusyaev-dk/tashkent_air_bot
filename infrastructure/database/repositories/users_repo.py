@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict
 
-from sqlalchemy import select, func, update, delete
+from sqlalchemy import select, func, update, delete, and_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -122,3 +122,21 @@ class UsersRepository:
             telegram_id=telegram_id,
             notifications=default_notifications,
         )
+
+    async def get_notifiable_users_ids(
+            self,
+            hours: str,
+            language_code: str = None
+    ) -> List[int]:
+        stmt = select(UserLocal.telegram_id).join(
+            UserNotification, UserNotification.telegram_id == UserLocal.telegram_id
+        ).where(
+            and_(
+                UserLocal.is_active == 1,
+                UserLocal.notifications == 1,
+                UserNotification.hours == hours,
+                (UserLocal.language == language_code) if language_code else UserLocal.language
+            )
+        )
+        result = await self.__session.scalars(stmt)
+        return list(result.all())

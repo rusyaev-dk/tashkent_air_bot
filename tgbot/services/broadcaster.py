@@ -1,17 +1,10 @@
 import asyncio
 import logging
-from datetime import datetime
 from typing import List, Tuple
 
-import pytz
 from aiogram import Bot
 from aiogram import exceptions
 from aiogram.types import InlineKeyboardMarkup
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from infrastructure.database.models import UserLocal
-from l10n.translator import Translator
-from tgbot.services.format_functions import format_aqi_info
 
 
 async def send_text(
@@ -221,61 +214,3 @@ async def broadcast(
     finally:
         logging.info(f"{count} messages successful sent.")
     return count
-
-#
-# async def aqi_users_notifying(
-#         bot: Bot,
-#         session_pool: async_sessionmaker,
-#         translator_hub: TranslatorHub,
-# ):
-#     async with session_pool() as session:
-#         repo = RequestsRepo(session)
-#         current_aqi = await repo.aqi.get_current_aqi()
-#         if not current_aqi:
-#             return
-#
-#         tz = pytz.timezone('Asia/Tashkent')
-#         current_time = datetime.now(tz)
-#         hours = current_time.strftime('%H')
-#
-#         minutes = current_time.strftime("%M")
-#         if int(minutes) > 50:
-#             hours = str((int(hours) + 1))
-#
-#         hours = hours.zfill(2)
-#
-#         ru_users_ids = await repo.users.get_notifiable_user_ids(language_code="ru", hours=hours)
-#         uz_users_ids = await repo.users.get_notifiable_user_ids(language_code="uz", hours=hours)
-#         en_users_ids = await repo.users.get_notifiable_user_ids(language_code="en", hours=hours)
-#
-#         if not len(ru_users_ids) and not len(uz_users_ids) and not len(en_users_ids):
-#             return
-#
-#     count = 0
-#
-#     try:
-#         ru_text = format_aqi_info(aqi=current_aqi, l10n=translator_hub.l10ns.get("ru"))
-#         for user_id in ru_users_ids:
-#             success = await send_text(bot=bot, user_id=user_id, text=ru_text, disable_notification=True)
-#             if not success[0] and success[1] == "bot_blocked":
-#                 await repo.users.update_user(User.telegram_id == user_id, is_active=False)
-#             count += 1
-#             await asyncio.sleep(0.05)
-#
-#         uz_text = format_aqi_info(aqi=current_aqi, l10n=translator_hub.l10ns.get("uz"))
-#         for user_id in uz_users_ids:
-#             success = await send_text(bot=bot, user_id=user_id, text=uz_text, disable_notification=True)
-#             if not success[0] and success[1] == "bot_blocked":
-#                 await repo.users.update_user(User.telegram_id == user_id, is_active=False)
-#             count += 1
-#             await asyncio.sleep(0.05)
-#
-#         en_text = format_aqi_info(aqi=current_aqi, l10n=translator_hub.l10ns.get("en"))
-#         for user_id in en_users_ids:
-#             success = await send_text(bot=bot, user_id=user_id, text=en_text, disable_notification=True)
-#             if not success[0] and success[1] == "bot_blocked":
-#                 await repo.users.update_user(User.telegram_id == user_id, is_active=False)
-#             count += 1
-#             await asyncio.sleep(0.05)
-#     finally:
-#         logging.info(f"{count} messages successful sent.")

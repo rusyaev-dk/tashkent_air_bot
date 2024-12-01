@@ -9,11 +9,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from aiogram_dialog import setup_dialogs
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from dishka import AsyncContainer
 
 from di.di import setup_dependencies
-from infrastructure.api.repositories.aqi_repo import AQIRepository
-from l10n.translator import Translator
 from tgbot.config import Config
 from tgbot.handlers import routers_list
 from tgbot.middlewares.database import UserExistingMiddleware
@@ -21,6 +19,7 @@ from tgbot.middlewares.l10n import L10nMiddleware
 from tgbot.middlewares.throttling import ThrottlingMiddleware
 from tgbot.misc.constants import DEFAULT_THROTTLE_TIME
 from tgbot.services import broadcaster
+from tgbot.services.aqi_scheduler import AQIScheduler
 from tgbot.services.micro_functions import get_correct_update_run_time
 from tgbot.services.setup_bot_commands import setup_admin_commands
 from dishka.integrations.aiogram import setup_dishka
@@ -38,7 +37,7 @@ def setup_logging():
     logger.info("Starting bot")
 
 
-def get_storage(
+def setup_storage(
         config: Config
 ):
     if config.tg_bot.use_redis:
@@ -50,8 +49,8 @@ def get_storage(
         return MemoryStorage()
 
 
-def register_global_middlewares(
-        dp: Dispatcher,
+def setup_global_middlewares(
+        dp: Dispatcher
 ):
     dp.message.middleware(ThrottlingMiddleware(
         default_throttle_time=DEFAULT_THROTTLE_TIME))
@@ -62,17 +61,15 @@ def register_global_middlewares(
     dp.callback_query.middleware(L10nMiddleware())
 
 
-def setup_scheduling(
-        scheduler: AsyncIOScheduler,
+async def setup_scheduler(
         bot: Bot,
-        aqi_api: AQIRepository,
-        config: Config,
-        translator_hub: Translator,
-        session_pool: async_sessionmaker
+        di_container: AsyncContainer
 ):
+    scheduler = await di_container.get(AsyncIOScheduler)
+    scheduler.start()
+
     now = datetime.now()
     update_run_time = get_correct_update_run_time(now=now)
-
     # scheduler.add_job(
     #     func=aqi_api.update_aqi, trigger='interval',
     #     minutes=SCHEDULER_AQI_INTERVAL_MINUTES, replace_existing=True,
@@ -81,13 +78,12 @@ def setup_scheduling(
     # )
 
     scheduler.add_job(
-        func=aqi_api.update_aqi, trigger='interval',
+        func=AQIScheduler.update_aqi, trigger='interval',
         seconds=5, replace_existing=True,
-        args=(bot, config, session_pool)
+        args=(di_container,)
     )
 
     first_run_time = None
-
     if 0 < now.minute < 59:
         first_run_time = now.replace(second=30, microsecond=0, minute=59, hour=now.hour)
 
@@ -97,11 +93,11 @@ def setup_scheduling(
     #     args=(bot, session_pool, translator_hub)
     # )
 
-    # scheduler.add_job(
-    #     func=aqi_users_notifying, trigger='interval', seconds=5,
-    #     replace_existing=True, start_date=first_run_time,
-    #     args=(bot, session_pool, translator_hub)
-    # )
+    scheduler.add_job(
+        func=AQIScheduler.send_aqi_to_users, trigger='interval',
+        seconds=5, replace_existing=True,
+        args=(bot, di_container,)
+    )
 
 
 async def on_startup(
@@ -117,25 +113,30 @@ async def main():
 
     container = setup_dependencies()
     config = await container.get(Config)
+    # logging.warning(config.db.db_file)
 
-    storage = get_storage(config)
+    bot = Bot(
+        token=config.tg_bot.token,
+        default=DefaultBotProperties(parse_mode='HTML')
+    )
 
-    bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))
-
+    storage = setup_storage(config)
     dp = Dispatcher(storage=storage)
     dp.include_routers(*routers_list)
-    setup_dialogs(dp)
 
-    register_global_middlewares(dp=dp)
+    setup_dialogs(dp)
+    setup_dishka(container=container, router=dp)
+
+    setup_global_middlewares(dp=dp)
     dp.workflow_data.update(config=config)
 
+    await setup_scheduler(bot, container)
     await on_startup(bot, config.tg_bot.admin_ids)
-    setup_dishka(container=container, router=dp)
 
     try:
         await dp.start_polling(bot)
     except (KeyboardInterrupt, SystemExit):
-        logging.error("Stopping bot")
+        logging.error("Stopping bot...")
     finally:
         await container.close()
         await bot.session.close()

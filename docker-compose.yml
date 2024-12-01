@@ -9,6 +9,7 @@ services:
     working_dir: "/usr/src/app/bot"
     volumes:
       - .:/usr/src/app/bot
+      - /Users/rusyaev/Development/pycharm_projects/tashkent_air_bot/infrastructure/database/bot_db.db:/usr/src/app/bot/infrastructure/database/bot_db.db
     command: python3 -m bot
     restart: always
     env_file:

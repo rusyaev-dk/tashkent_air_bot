@@ -107,4 +107,3 @@ def setup_dependencies() -> AsyncContainer:
     )
 
     return container
-
