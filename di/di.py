@@ -6,7 +6,7 @@ from dishka import provide, Scope, Provider, make_async_container, AsyncContaine
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, AsyncEngine
 
-from infrastructure.api.repositories.aqi_repo import AQIRepository
+from infrastructure.database.repositories.aqi_repo import AQIRepository
 from infrastructure.api.clients.http_client import HttpClient
 from infrastructure.api.clients.aqi_client import AQIClient
 from infrastructure.database.models import Base
@@ -41,7 +41,7 @@ class DBServiceProvider(Provider):
             class_=AsyncSession,
             expire_on_commit=False,
             autoflush=False,
-            autocommit=False,
+            autocommit=False
         )
 
     @provide(scope=Scope.REQUEST)

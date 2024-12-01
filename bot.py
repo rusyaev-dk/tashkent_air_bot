@@ -113,7 +113,6 @@ async def main():
 
     container = setup_dependencies()
     config = await container.get(Config)
-    # logging.warning(config.db.db_file)
 
     bot = Bot(
         token=config.tg_bot.token,

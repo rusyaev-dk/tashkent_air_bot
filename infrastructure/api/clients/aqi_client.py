@@ -1,3 +1,5 @@
+from typing import Optional
+
 from infrastructure.api.clients.http_client import HttpClient
 
 
@@ -14,7 +16,7 @@ class AQIClient:
         self.base_url = base_url
         self.token = token
 
-    async def get_aqi(self, lat: float, lon: float) -> dict:
+    async def request_aqi(self, lat: float, lon: float) -> Optional[dict]:
         """
         Fetches AQI data for the specified latitude and longitude.
 

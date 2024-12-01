@@ -1,4 +1,4 @@
-from infrastructure.api.models.models import AQI
+from infrastructure.api.models.aqi import AQI
 from infrastructure.database.models import UserLocal
 
 from infrastructure.database.repositories.users_repo import UsersRepository

@@ -5,7 +5,7 @@ from aiogram_dialog import DialogManager, StartMode
 from dishka import FromDishka
 from dishka.integrations.aiogram import inject
 
-from infrastructure.api.repositories.aqi_repo import AQIRepository
+from infrastructure.database.repositories.aqi_repo import AQIRepository
 from l10n.translator import Translator
 from tgbot.keyboards.inline import WeekAqiForecastFactory
 from tgbot.keyboards.reply import feedback_kb

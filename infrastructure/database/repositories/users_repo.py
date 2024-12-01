@@ -18,14 +18,27 @@ class UsersRepository:
             language: str,
             username: Optional[str] = None,
     ) -> UserLocal:
-        stmt = insert(UserLocal).values(
-            telegram_id=telegram_id,
-            full_name=full_name,
-            language=language,
-            username=username
-        ).returning(UserLocal)
+        stmt = (
+            insert(UserLocal)
+            .values(
+                telegram_id=telegram_id,
+                full_name=full_name,
+                language=language,
+                username=username,
+            )
+            .on_conflict_do_update(
+                index_elements=[UserLocal.telegram_id],
+                set_={
+                    "full_name": full_name,
+                    "language": language,
+                    "username": username
+                }
+            )
+            .returning(UserLocal)
+        )
         result = await self.__session.execute(stmt)
         await self.__session.commit()
+
         return result.scalar_one()
 
     async def get_user(self, telegram_id: int) -> Optional[UserLocal]:
@@ -132,8 +145,8 @@ class UsersRepository:
             UserNotification, UserNotification.telegram_id == UserLocal.telegram_id
         ).where(
             and_(
-                UserLocal.is_active == 1,
-                UserLocal.notifications == 1,
+                UserLocal.is_active == True,
+                UserLocal.notifications == True,
                 UserNotification.hours == hours,
                 (UserLocal.language == language_code) if language_code else UserLocal.language
             )

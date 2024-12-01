@@ -5,7 +5,7 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from dishka import FromDishka
 from dishka.integrations.aiogram import inject
 
-from infrastructure.api.repositories.aqi_repo import AQIRepository
+from infrastructure.database.repositories.aqi_repo import AQIRepository
 from infrastructure.database.repositories.users_repo import UsersRepository
 from tgbot.filters.admin import AdminFilter
 from tgbot.keyboards.inline import set_target_language_code_kb

@@ -3,46 +3,67 @@ from typing import Optional, List
 
 from environs import Env
 from sqlalchemy.engine.url import URL
-from pathlib import Path
 
 
 @dataclass
 class DbConfig:
     """
-    Database configuration class for SQLite.
-    This class holds the settings for the SQLite database, such as the file path.
+    Database configuration class.
+    This class holds the settings for the database, such as host, password, port, etc.
 
     Attributes
     ----------
-    db_file : str
-        The file path to the SQLite database file.
+    host : str
+        The host where the database server is located.
+    password : str
+        The password used to authenticate with the database.
+    user : str
+        The username used to authenticate with the database.
+    database : str
+        The name of the database.
+    port : int
+        The port where the database server is listening.
     """
 
-    db_file: str
-
-    def __init__(self, db_file: str):
-        self.db_file = db_file
+    host: str
+    password: str
+    user: str
+    database: str
+    port: int = 5432
 
     # For SQLAlchemy
-    def construct_sqlalchemy_url(self) -> str:
+    def construct_sqlalchemy_url(self, driver="asyncpg", host=None, port=None) -> str:
         """
-        Constructs and returns a SQLAlchemy URL for SQLite database configuration.
+        Constructs and returns a SQLAlchemy URL for this database configuration.
         """
-        # SQLite URL uses the format: sqlite+aiosqlite:///absolute/path/to/database.db
+
+        if not host:
+            host = self.host
+        if not port:
+            port = self.port
         uri = URL.create(
-            drivername="sqlite+aiosqlite",
-            database=self.db_file
+            drivername=f"postgresql+{driver}",
+            username=self.user,
+            password=self.password,
+            host=host,
+            port=port,
+            database=self.database,
         )
-        return uri.render_as_string()
+        return uri.render_as_string(hide_password=False)
 
     @staticmethod
-    def from_env(env: "Env"):
+    def from_env(env: Env):
         """
         Creates the DbConfig object from environment variables.
         """
-        db_file = env.str("DB_FILE", default="./infrastructure/database/bot_db.db")
-        db_file_path = Path(db_file).resolve()
-        return DbConfig(db_file=str(db_file_path))
+        host = env.str("DB_HOST")
+        password = env.str("POSTGRES_PASSWORD")
+        user = env.str("POSTGRES_USER")
+        database = env.str("POSTGRES_DB")
+        port = env.int("DB_PORT", 5432)
+        return DbConfig(
+            host=host, password=password, user=user, database=database, port=port
+        )
 
 
 @dataclass
