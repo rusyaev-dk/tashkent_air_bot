@@ -15,7 +15,7 @@ class UserLocal(Base, TimestampMixin):
     username: Mapped[Optional[str]] = mapped_column(String(128))
     full_name: Mapped[str] = mapped_column(String(128))
     notifications: Mapped[bool] = mapped_column(BOOLEAN, default=True, autoincrement=False)
-    language: Mapped[str] = mapped_column(String(10), server_default=text("'ru'"))
+    language_code: Mapped[str] = mapped_column(String(10), server_default=text("'ru'"))
     is_active: Mapped[bool] = mapped_column(BOOLEAN, default=True, autoincrement=False)
 
     def __repr__(self):

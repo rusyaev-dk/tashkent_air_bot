@@ -154,7 +154,7 @@ async def change_user_language(
     language_code = button.widget_id[:2]
     l10n.change_locale(language_code)
 
-    await users_repo.update_user(UserLocal.telegram_id == call.from_user.id, language=language_code)
+    await users_repo.update_user(UserLocal.telegram_id == call.from_user.id, language_code=language_code)
 
     await dialog_manager.done()
     await dialog_manager.reset_stack()

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from typing import Optional
 
+import pytz
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
@@ -62,6 +63,10 @@ class AQIRepository:
 
         if not local:
             return None
+
+        tz = pytz.timezone("Asia/Tashkent")
+        local.date = local.date.astimezone(tz)
+
         return AQI.from_local(local)
 
     async def update_aqi(self, lat: float = None, lon: float = None) -> None:

@@ -118,7 +118,7 @@ async def notify_approve(
     msg_type = data.get("msg_type")
     target_language_code = data.get("target_language_code")
     if target_language_code in ["ru", "uz", "en"]:
-        users = await users_repo.get_users(UserLocal.language == target_language_code)
+        users = await users_repo.get_users(UserLocal.language_code == target_language_code)
     else:
         users = await users_repo.get_users()
 

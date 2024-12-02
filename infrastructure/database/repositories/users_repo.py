@@ -15,7 +15,7 @@ class UsersRepository:
             self,
             telegram_id: int,
             full_name: str,
-            language: str,
+            language_code: str,
             username: Optional[str] = None,
     ) -> UserLocal:
         stmt = (
@@ -23,14 +23,14 @@ class UsersRepository:
             .values(
                 telegram_id=telegram_id,
                 full_name=full_name,
-                language=language,
+                language_code=language_code,
                 username=username,
             )
             .on_conflict_do_update(
                 index_elements=[UserLocal.telegram_id],
                 set_={
                     "full_name": full_name,
-                    "language": language,
+                    "language_code": language_code,
                     "username": username
                 }
             )
@@ -47,7 +47,7 @@ class UsersRepository:
         return result
 
     async def get_user_language_code(self, telegram_id: int) -> str:
-        stmt = select(UserLocal.language).where(UserLocal.telegram_id == telegram_id)
+        stmt = select(UserLocal.language_code).where(UserLocal.telegram_id == telegram_id)
         result = await self.__session.scalar(stmt)
         return result
 
@@ -85,7 +85,7 @@ class UsersRepository:
         if notifications:
             notification_time_dicts = [
                 {
-                    "notification_id": f"{telegram_id}_{notification['notification_id']}",
+                    "notification_id": f"{telegram_id}_{notification['notification_id']}",  # убрать {telegram_id}
                     "telegram_id": telegram_id,
                     "hours": notification["hours"],
                     "minutes": notification["minutes"],
@@ -98,7 +98,7 @@ class UsersRepository:
 
         await self.update_user(
             UserLocal.telegram_id == telegram_id,
-            notifications=bool(notifications),
+            notifications=bool(len(notifications)),
         )
         await self.__session.commit()
 
@@ -148,7 +148,7 @@ class UsersRepository:
                 UserLocal.is_active == True,
                 UserLocal.notifications == True,
                 UserNotification.hours == hours,
-                (UserLocal.language == language_code) if language_code else UserLocal.language
+                (UserLocal.language_code == language_code) if language_code else UserLocal.language_code
             )
         )
         result = await self.__session.scalars(stmt)

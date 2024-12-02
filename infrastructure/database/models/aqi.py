@@ -1,8 +1,9 @@
 import datetime
 from typing import Any
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 
+import pytz
 from sqlalchemy import VARCHAR, TIMESTAMP, DECIMAL, INTEGER
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -40,7 +41,8 @@ class AQILocal(Base, TimestampMixin):
         aqi_usa: int = AqiConverter.convert_to_usa_aqi(pollutants)[0]  # returns tuple with detailed dict
 
         timestamp = json["list"][0]["dt"]
-        date = datetime.fromtimestamp(timestamp).replace(tzinfo=timezone(timedelta(hours=5)))
+        tz = pytz.timezone("Asia/Tashkent")
+        date = datetime.fromtimestamp(timestamp, tz)
         coord = json["coord"]
 
         return cls(

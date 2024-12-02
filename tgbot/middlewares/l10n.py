@@ -2,7 +2,6 @@ from typing import Callable, Dict, Any, Awaitable
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-from dishka import AsyncContainer
 
 from infrastructure.database.repositories.users_repo import UsersRepository
 from l10n.translator import Translator

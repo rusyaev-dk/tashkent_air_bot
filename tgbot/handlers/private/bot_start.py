@@ -53,7 +53,7 @@ async def set_user_language(
     await users_repo.add_user(
         telegram_id=call.from_user.id,
         full_name=call.from_user.full_name,
-        language=language_code,
+        language_code=language_code,
         username=call.from_user.username,
     )
     l10n.change_locale(language_code)

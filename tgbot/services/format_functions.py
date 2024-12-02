@@ -97,9 +97,9 @@ async def format_statistics_info(
     total_users_count = await users_repo.get_users_count()
     active_users_count = await users_repo.get_users_count(UserLocal.is_active == True)
 
-    ru_users_count = await users_repo.get_users_count(UserLocal.language == "ru")
-    uz_users_count = await users_repo.get_users_count(UserLocal.language == "uz")
-    en_users_count = await users_repo.get_users_count(UserLocal.language == "en")
+    ru_users_count = await users_repo.get_users_count(UserLocal.language_code == "ru")
+    uz_users_count = await users_repo.get_users_count(UserLocal.language_code == "uz")
+    en_users_count = await users_repo.get_users_count(UserLocal.language_code == "en")
 
     text = (
         f"Всего пользователей: <b>{total_users_count}</b> чел.\n"
