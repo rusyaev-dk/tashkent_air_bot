@@ -95,7 +95,7 @@ async def format_statistics_info(
 ) -> str:
 
     total_users_count = await users_repo.get_users_count()
-    active_users_count = await users_repo.get_users_count(UserLocal.is_active == 1)
+    active_users_count = await users_repo.get_users_count(UserLocal.is_active == True)
 
     ru_users_count = await users_repo.get_users_count(UserLocal.language == "ru")
     uz_users_count = await users_repo.get_users_count(UserLocal.language == "uz")

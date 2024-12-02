@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, AsyncEngine
 from infrastructure.database.repositories.aqi_repo import AQIRepository
 from infrastructure.api.clients.http_client import HttpClient
 from infrastructure.api.clients.aqi_client import AQIClient
-from infrastructure.database.models import Base
 from infrastructure.database.repositories.users_repo import UsersRepository
 from infrastructure.database.setup import create_engine
 from l10n.translator import Translator
@@ -30,7 +29,7 @@ class DBServiceProvider(Provider):
     async def db_engine(self, config: Config) -> AsyncIterable[AsyncEngine]:
         engine = create_engine(config.db)
         async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+
             yield engine
             await engine.dispose()
 
@@ -97,7 +96,7 @@ class ServiceProvider(Provider):
         return translator
 
 
-def setup_dependencies() -> AsyncContainer:
+async def setup_dependencies() -> AsyncContainer:
     container = make_async_container(
         ConfigProvider(),
         DBServiceProvider(),

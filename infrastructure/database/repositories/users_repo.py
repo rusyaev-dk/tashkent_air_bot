@@ -98,7 +98,7 @@ class UsersRepository:
 
         await self.update_user(
             UserLocal.telegram_id == telegram_id,
-            notifications=int(bool(notifications)),
+            notifications=bool(notifications),
         )
         await self.__session.commit()
 

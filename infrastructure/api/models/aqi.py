@@ -24,8 +24,6 @@ class AQI:
 
     @classmethod
     def from_local(cls, local: AQILocal) -> 'AQI':
-        date = local.date.replace(tzinfo=timezone(timedelta(hours=5)))
-
         return cls(
             aqi=local.aqi,
             pm10=local.pm10,
@@ -33,5 +31,5 @@ class AQI:
             o3=local.o3,
             lat=local.lat,
             lon=local.lon,
-            date=date,
+            date=local.date,
         )

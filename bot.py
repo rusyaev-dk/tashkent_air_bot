@@ -10,8 +10,12 @@ from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from aiogram_dialog import setup_dialogs
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dishka import AsyncContainer
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from di.di import setup_dependencies
+from infrastructure.database.models import Base
+from infrastructure.database.repositories.users_repo import UsersRepository
 from tgbot.config import Config
 from tgbot.handlers import routers_list
 from tgbot.middlewares.database import UserExistingMiddleware
@@ -100,6 +104,21 @@ async def setup_scheduler(
     )
 
 
+async def establish_db(di_container: AsyncContainer):
+    engine: AsyncEngine = await di_container.get(AsyncEngine)
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with di_container() as request_container:
+        users_repo = await request_container.get(UsersRepository)
+        try:
+            users_count = await users_repo.get_users_count()
+            logging.info(f"Database connection established. Users in database: {users_count}.")
+        except SQLAlchemyError as e:
+            logging.error(f"Database connection failed. Error: {e}")
+
+
 async def on_startup(
         bot: Bot,
         admin_ids: list[int]
@@ -111,8 +130,9 @@ async def on_startup(
 async def main():
     setup_logging()
 
-    container = setup_dependencies()
+    container = await setup_dependencies()
     config = await container.get(Config)
+    await establish_db(di_container=container)
 
     bot = Bot(
         token=config.tg_bot.token,
@@ -129,7 +149,7 @@ async def main():
     setup_global_middlewares(dp=dp)
     dp.workflow_data.update(config=config)
 
-    await setup_scheduler(bot, container)
+    # await setup_scheduler(bot, container)
     await on_startup(bot, config.tg_bot.admin_ids)
 
     try:

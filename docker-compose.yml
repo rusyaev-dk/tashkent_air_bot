@@ -50,7 +50,6 @@ services:
     volumes:
       - cache:/data
 
-# Uncomment the following lines if you want to use a volume for the database
 volumes:
   pgdata: { }
   cache: { }

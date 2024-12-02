@@ -1,7 +1,7 @@
 import datetime
 from typing import Any
 
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from sqlalchemy import VARCHAR, TIMESTAMP, DECIMAL, INTEGER
 from sqlalchemy.orm import Mapped, mapped_column
@@ -32,7 +32,7 @@ class AQILocal(Base, TimestampMixin):
     lon: Mapped[float] = mapped_column(DECIMAL(precision=16, scale=4), default=0, nullable=False,
                                         autoincrement=False)
 
-    date: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False, autoincrement=False)
+    date: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, autoincrement=False)
 
     @classmethod
     def from_json(cls, json: dict[str, Any]) -> 'AQILocal':
@@ -40,7 +40,7 @@ class AQILocal(Base, TimestampMixin):
         aqi_usa: int = AqiConverter.convert_to_usa_aqi(pollutants)[0]  # returns tuple with detailed dict
 
         timestamp = json["list"][0]["dt"]
-        date = datetime.fromtimestamp(timestamp)
+        date = datetime.fromtimestamp(timestamp).replace(tzinfo=timezone(timedelta(hours=5)))
         coord = json["coord"]
 
         return cls(
