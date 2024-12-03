@@ -124,15 +124,17 @@ class UsersRepository:
             hours: str,
             language_code: str = None
     ) -> list[int]:
+        conditions = [
+            UserLocal.is_active == True,
+            UserLocal.notifications == True,
+            UserNotification.hours == hours,
+        ]
+        if language_code:
+            conditions.append(UserLocal.language_code == language_code)
+
         stmt = select(UserLocal.telegram_id).join(
             UserNotification, UserNotification.telegram_id == UserLocal.telegram_id
-        ).where(
-            and_(
-                UserLocal.is_active == True,
-                UserLocal.notifications == True,
-                UserNotification.hours == hours,
-                (UserLocal.language_code == language_code) if language_code else UserLocal.language_code
-            )
-        )
+        ).where(and_(*conditions))
+
         result = await self.__session.scalars(stmt)
         return list(result.all())
