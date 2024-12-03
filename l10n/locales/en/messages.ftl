@@ -21,7 +21,7 @@ main-menu-msg = Main menu:
 action-cancelled = Action cancelled.
 notifications-enabled = 🔔 Notifications enabled.
 notifications-disabled = 🔕 Notifications disabled.
-choose-notification-time = 🕘 Select a time convenient for you to notify:
+select-notification-time = 🕘 Select a time convenient for you to notify:
 settings-applied = ✅ Settings applied
 
 send-feedback = ✉️ Write a message to the administration:

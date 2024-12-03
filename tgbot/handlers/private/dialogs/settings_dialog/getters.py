@@ -72,10 +72,12 @@ async def change_notifications_getter(
     data = {
         "notifications": notifications,
         "has_changes": has_changes,
-        "chosen_more_one": len(selected_notifications) > 1,
-        "choose_notif_time_text": l10n.get_text(key='choose-notification-time'),
+        "selected_more_one": len(selected_notifications) > 1,
+        "selected_not_all": len(selected_notifications) < 17,
+        "select_notif_time_text": l10n.get_text(key='select-notification-time'),
         "save_btn_text": l10n.get_text(key='save-btn'),
         "deselect_all_btn_text": l10n.get_text(key='deselect-all-notifications-btn'),
+        "select_all_btn_text": l10n.get_text(key='select-all-notifications-btn'),
         "back_btn_text": l10n.get_text(key='back-btn')
     }
 

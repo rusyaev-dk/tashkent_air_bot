@@ -23,6 +23,8 @@ save-btn = 💾 Saqlash
 
 deselect-all-notifications-btn = ❌ Hammasini bekor qilish
 
+select-all-notifications-btn = Hammasini tanlang
+
 back-btn = Orqaga
 
 forecast-btn = 🗓 Prognoz

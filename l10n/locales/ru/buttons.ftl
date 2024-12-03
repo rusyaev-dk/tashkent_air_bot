@@ -23,6 +23,8 @@ save-btn = 💾 Сохранить
 
 deselect-all-notifications-btn = ❌ Убрать все
 
+select-all-notifications-btn = Выбрать все
+
 back-btn = Назад
 
 forecast-btn = 🗓 Прогноз

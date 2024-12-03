@@ -46,8 +46,11 @@ async def switch_user_notifications(
     else:
         notifications = True
 
-    await users_repo.update_user(UserLocal.telegram_id == call.from_user.id, notifications=notifications)
-    text = l10n.get_text(key="notifications-enabled") if notifications else l10n.get_text(key="notifications-disabled")
+    await users_repo.update_user(
+        UserLocal.telegram_id == call.from_user.id,
+        notifications=notifications
+    )
+    text = l10n.get_text(key="notifications-enabled" if notifications else "notifications-disabled")
 
     await call.answer(text)
 
@@ -76,6 +79,23 @@ async def select_notification(
 
     dialog_manager.dialog_data.update(
         has_changes=has_changes,
+        selected_notifications=selected_notifications
+    )
+
+
+async def select_all_notifications(
+        call: CallbackQuery,
+        button: Button,
+        dialog_manager: DialogManager
+):
+    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications")
+
+    for hour in range(7, 24):
+        hour = str(hour).zfill(2)
+        selected_notifications.add(hour)
+
+    dialog_manager.dialog_data.update(
+        has_changes=True,
         selected_notifications=selected_notifications
     )
 
@@ -131,7 +151,7 @@ async def change_user_language(
         users_repo: FromDishka[UsersRepository],
         l10n: FromDishka[Translator]
 ):
-    language_code = button.widget_id[:2]
+    language_code = button.widget_id[-2:]
     l10n.change_locale(language_code)
 
     await users_repo.update_user(UserLocal.telegram_id == call.from_user.id, language_code=language_code)

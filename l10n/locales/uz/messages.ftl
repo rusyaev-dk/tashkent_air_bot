@@ -21,7 +21,7 @@ main-menu-msg = Asosiy menyu:
 action-cancelled = Amal bekor qilindi.
 notifications-enabled = 🔔 Bildirishnomalar yoqilgan.
 notifications-disabled = 🔕 Bildirishnomalar o'chirilgan.
-choose-notification-time = 🕘 Xabar berish uchun qulay vaqtni tanlang:
+select-notification-time = 🕘 Xabar berish uchun qulay vaqtni tanlang:
 settings-applied = ✅ Sozlamalar qoʻllanildi
 
 send-feedback = ✉️ Ma'muriyatga xabar yozing:

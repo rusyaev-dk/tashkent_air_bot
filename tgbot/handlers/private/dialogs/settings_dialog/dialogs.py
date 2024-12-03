@@ -6,7 +6,7 @@ from tgbot.handlers.private.dialogs.settings_dialog.getters import overall_setti
     change_notifications_getter, notification_id_getter
 from tgbot.handlers.private.dialogs.settings_dialog.callable import switch_user_notifications, change_user_language, \
     close_settings, select_notification, save_selected_notifications, cancel_notification_setting, \
-    deselect_all_notifications
+    deselect_all_notifications, select_all_notifications
 from tgbot.misc.constants import SET_USER_LANGUAGE_TEXT
 from tgbot.misc.states import SettingsSG
 
@@ -37,7 +37,7 @@ overall_settings_window = Window(
 )
 
 change_user_notifications_window = Window(
-    Format("{choose_notif_time_text}"),
+    Format("{select_notif_time_text}"),
     Group(
         Select(
             text=Format("{item[btn_text]}"),
@@ -48,18 +48,24 @@ change_user_notifications_window = Window(
         ),
         width=3
     ),
+    SwitchTo(
+        text=Format("{save_btn_text}"),
+        id="btn_save_selected_notifications",
+        when="has_changes",
+        on_click=save_selected_notifications,
+        state=SettingsSG.overall_settings
+    ),
     Row(
-        SwitchTo(
-            text=Format("{save_btn_text}"),
-            id="btn_save_selected_notifications",
-            when="has_changes",
-            on_click=save_selected_notifications,
-            state=SettingsSG.overall_settings
+        Button(
+            text=Format("{select_all_btn_text}"),
+            id="btn_select_all_notifications",
+            when="selected_not_all",
+            on_click=select_all_notifications
         ),
         Button(
             text=Format("{deselect_all_btn_text}"),
             id="btn_deselect_all_notifications",
-            when="chosen_more_one",
+            when="selected_more_one",
             on_click=deselect_all_notifications
         )
     ),

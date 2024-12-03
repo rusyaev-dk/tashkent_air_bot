@@ -23,6 +23,8 @@ save-btn = 💾 Save
 
 deselect-all-notifications-btn = ❌ Deselect all
 
+select-all-notifications-btn = Select all
+
 back-btn = Back
 
 forecast-btn = 🗓 Forecast
