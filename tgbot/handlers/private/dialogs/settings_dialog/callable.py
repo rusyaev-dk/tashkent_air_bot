@@ -1,5 +1,4 @@
 import html
-from typing import List, Dict
 
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
@@ -12,8 +11,6 @@ from infrastructure.database.repositories.users_repo import UsersRepository
 from l10n.translator import Translator
 from tgbot.keyboards.reply import main_menu_kb
 from tgbot.misc.states import SettingsSG
-from tgbot.services import generate_random_id
-from tgbot.services.micro_functions import find_notification_in_list, compare_notifications_lists
 from tgbot.services.setup_bot_commands import update_user_commands
 
 
@@ -38,8 +35,8 @@ async def switch_user_notifications(
         users_repo: FromDishka[UsersRepository],
         l10n: FromDishka[Translator]
 ):
-    user_notifications = await users_repo.get_user_notifications(telegram_id=call.from_user.id)
-    if not user_notifications:
+    user_notifications: set = await users_repo.get_user_notification_hours(telegram_id=call.from_user.id)
+    if len(user_notifications) == 0:
         await dialog_manager.switch_to(state=SettingsSG.change_notification_time)
         return
 
@@ -55,81 +52,64 @@ async def switch_user_notifications(
     await call.answer(text)
 
 
-async def change_user_notification_time(
+@inject
+async def select_notification(
         call: CallbackQuery,
         select: Select,
         dialog_manager: DialogManager,
-        notification_id: str
+        notification_id: str,
+        users_repo: FromDishka[UsersRepository]
 ):
-    selected_hours = notification_id[:2]
+    selected_hour = notification_id[:2]
 
-    chosen_notifications: List[Dict] = dialog_manager.dialog_data.get("chosen_notifications")
-    initial_notifications: List[Dict] = dialog_manager.dialog_data.get("initial_notifications")
+    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications")
+    initial_hours: set = await users_repo.get_user_notification_hours(telegram_id=call.from_user.id)
 
-    if find_notification_in_list(notifications_list=chosen_notifications, hours=selected_hours):
-        for notification_time in chosen_notifications:
-            if notification_time.get("hours") == selected_hours:
-                chosen_notifications.remove(notification_time)
-                break
+    if selected_hour in selected_notifications:
+        selected_notifications.remove(selected_hour)
     else:
-        chosen_notifications.append(
-            {
-                "notification_id": selected_hours + generate_random_id(5),
-                "hours": selected_hours,
-                "minutes": "00",
-                "chosen_by_user": True,
-                "btn_text": f"✅ {selected_hours}:00"
-            }
-        )
+        selected_notifications.add(selected_hour)
 
-    equal = compare_notifications_lists(initial_notifications, chosen_notifications)
+    has_changes = False
+    if selected_notifications != initial_hours:
+        has_changes = True
 
     dialog_manager.dialog_data.update(
-        made_changes_flag=not equal,
-        chosen_notifications=chosen_notifications
-    )
-
-
-async def deselect_all_user_notifications(
-        call: CallbackQuery,
-        button: Button,
-        dialog_manager: DialogManager
-):
-    initial_notifications: List[Dict] = dialog_manager.dialog_data.get("initial_notifications")
-    initial_notifications_copy: List[Dict] = dialog_manager.dialog_data.get("initial_notifications_copy")
-    chosen_notifications: List[Dict] = dialog_manager.dialog_data.get("chosen_notifications")
-
-    if len(initial_notifications_copy) > 0:
-        initial_notifications_copy.clear()
-        dialog_manager.dialog_data.update(
-            initial_notifications_copy=initial_notifications_copy,
-        )
-
-    chosen_notifications.clear()
-
-    if compare_notifications_lists(initial_notifications, chosen_notifications):
-        made_changes_flag = False
-    else:
-        made_changes_flag = True
-
-    dialog_manager.dialog_data.update(
-        made_changes_flag=made_changes_flag,
-        chosen_notifications=chosen_notifications
+        has_changes=has_changes,
+        selected_notifications=selected_notifications
     )
 
 
 @inject
-async def save_user_notification_settings(
+async def deselect_all_notifications(
+        call: CallbackQuery,
+        button: Button,
+        dialog_manager: DialogManager,
+        users_repo: FromDishka[UsersRepository]
+):
+    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications")
+    initial_hours: set = await users_repo.get_user_notification_hours(telegram_id=call.from_user.id)
+
+    selected_notifications.clear()
+
+    dialog_manager.dialog_data.update(
+        has_changes=len(initial_hours) > 0,
+        selected_notifications=selected_notifications
+    )
+
+
+@inject
+async def save_selected_notifications(
         call: CallbackQuery,
         button: Button,
         dialog_manager: DialogManager,
         users_repo: FromDishka[UsersRepository],
         l10n: FromDishka[Translator]
 ):
-    chosen_notifications: List = dialog_manager.dialog_data.get("chosen_notifications")
+    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications")
     await users_repo.update_user_notifications(
         telegram_id=call.from_user.id,
-        notifications=chosen_notifications
+        hours=list(selected_notifications)
     )
     await call.answer(l10n.get_text(key='settings-applied'), show_alert=False)
     dialog_manager.dialog_data.clear()

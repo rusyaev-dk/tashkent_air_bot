@@ -1,5 +1,3 @@
-from typing import List, Dict
-
 from aiogram.types import User as AIOGRAMuser
 from aiogram_dialog import DialogManager
 from dishka import FromDishka
@@ -7,8 +5,6 @@ from dishka.integrations.aiogram_dialog import inject
 
 from infrastructure.database.repositories.users_repo import UsersRepository
 from l10n.translator import Translator
-from tgbot.services import generate_random_id
-from tgbot.services.micro_functions import find_notification_in_list
 
 
 @inject
@@ -34,8 +30,8 @@ async def overall_settings_getter(
     return data
 
 
-def notification_id_getter(notification: Dict) -> str:
-    return notification.get("notification_id")
+def notification_id_getter(notification: dict) -> str:
+    return notification.get("hour")
 
 
 @inject
@@ -46,47 +42,39 @@ async def change_notifications_getter(
         **kwargs
 ):
     user: AIOGRAMuser = dialog_manager.event.from_user
-    chosen_notifications: List[Dict] = dialog_manager.dialog_data.get("chosen_notifications")
-    made_changes_flag: bool = dialog_manager.dialog_data.get("made_changes_flag")
+    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications", set())
+    has_changes: bool = dialog_manager.dialog_data.get("has_changes")
 
-    if not chosen_notifications:
-        if made_changes_flag:
-            chosen_notifications = []
-        else:
-            chosen_notifications = await users_repo.get_user_notifications(telegram_id=user.id)
-            dialog_manager.dialog_data.update(
-                chosen_notifications=chosen_notifications,
-                initial_notifications=chosen_notifications.copy(),
-                initial_notifications_copy=chosen_notifications.copy(),
-            )
+    initial_hours: set = await users_repo.get_user_notification_hours(telegram_id=user.id)
 
-    all_notifications: List[Dict] = []
-    for hour in range(7, 24):
-        hours = str(hour).zfill(2)  # Добавляем ведущий ноль, если час однозначный
+    if len(selected_notifications) == 0 and not has_changes:
+        for hour in initial_hours:
+            selected_notifications.add(hour)
 
-        if find_notification_in_list(notifications_list=chosen_notifications, hours=hours):
-            chosen_by_user = True
-        else:
-            chosen_by_user = False
+        dialog_manager.dialog_data.update(
+            made_changes_flag=False,
+            selected_notifications=selected_notifications
+        )
 
-        all_notifications.append(
+    notifications: list[dict] = []
+    for hour in range(7, 24):  # keyboard buttons generating
+        hour = str(hour).zfill(2)  # Add a leading zero if the hour is single-digit
+
+        activated = hour in selected_notifications is not None
+        notifications.append(
             {
-                "notification_id": hours + generate_random_id(5),
-                "hours": hours,
-                "minutes": "00",
-                "chosen_by_user": chosen_by_user,
-                "btn_text": f"✅ {hours}:00" if chosen_by_user else f"{hours}:00"
+                "hour": hour,
+                "activated": activated,
+                "btn_text": f"✅ {hour}:00" if activated else f"{hour}:00"
             }
         )
-        # all_notifications.append(NotificationTimeModel(hours=hours, minutes="00",
-        #                                                chosen_by_user=chosen_by_user))
 
     data = {
-        "notification_objects": all_notifications,
-        "made_changes": True if made_changes_flag else False,
+        "notifications": notifications,
+        "has_changes": has_changes,
+        "chosen_more_one": len(selected_notifications) > 1,
         "choose_notif_time_text": l10n.get_text(key='choose-notification-time'),
         "save_btn_text": l10n.get_text(key='save-btn'),
-        "chosen_more_one": True if len(chosen_notifications) > 1 else False,
         "deselect_all_btn_text": l10n.get_text(key='deselect-all-notifications-btn'),
         "back_btn_text": l10n.get_text(key='back-btn')
     }

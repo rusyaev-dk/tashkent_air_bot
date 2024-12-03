@@ -1,10 +1,11 @@
-from typing import Optional, List, Dict
+from typing import Optional
 
 from sqlalchemy import select, func, update, delete, and_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.database.models import UserLocal, UserNotification
+from tgbot.services import generate_random_id
 
 
 class UsersRepository:
@@ -51,7 +52,7 @@ class UsersRepository:
         result = await self.__session.scalar(stmt)
         return result
 
-    async def get_users(self, *clauses) -> List[UserLocal]:
+    async def get_users(self, *clauses) -> list[UserLocal]:
         stmt = select(UserLocal).where(*clauses)
         result = await self.__session.execute(stmt)
         return result.scalars().all()
@@ -77,20 +78,20 @@ class UsersRepository:
 
     async def update_user_notifications(
         self,
-        notifications: List[Dict],
+        hours: list[str],
         telegram_id: int,
     ) -> None:
         await self.delete_all_notifications(telegram_id=telegram_id)
 
-        if notifications:
+        if len(hours) > 0:
             notification_time_dicts = [
                 {
-                    "notification_id": f"{telegram_id}_{notification['notification_id']}",  # убрать {telegram_id}
+                    "notification_id": generate_random_id(length=5, prefix=str(telegram_id)),
                     "telegram_id": telegram_id,
-                    "hours": notification["hours"],
-                    "minutes": notification["minutes"],
+                    "hours": hour,
+                    "minutes": "00",
                 }
-                for notification in notifications
+                for hour in hours
             ]
 
             stmt = insert(UserNotification).values(notification_time_dicts)
@@ -98,49 +99,31 @@ class UsersRepository:
 
         await self.update_user(
             UserLocal.telegram_id == telegram_id,
-            notifications=bool(len(notifications)),
+            notifications=bool(len(hours)),
         )
         await self.__session.commit()
 
-    async def get_user_notifications(self, telegram_id: int) -> List[Dict]:
+    async def get_user_notification_hours(self, telegram_id: int) -> set:
         stmt = select(UserNotification).where(UserNotification.telegram_id == telegram_id)
         result = await self.__session.execute(stmt)
 
-        user_notifications = []
+        hours_set = set()
         for notification in result.scalars().all():
-            user_notifications.append(
-                {
-                    "notification_id": notification.notification_id,
-                    "hours": notification.hours,
-                    "minutes": notification.minutes,
-                    "chosen_by_user": True,
-                }
-            )
+            hours_set.add(notification.hours)
 
-        return user_notifications
+        return hours_set
 
     async def setup_default_user_notifications(self, telegram_id: int) -> None:
-        default_hours = ["08", "13", "18"]
-        default_notifications = [
-            {
-                "notification_id": f"{hour}_{telegram_id}",
-                "hours": hour,
-                "minutes": "00",
-                "chosen_by_user": True,
-            }
-            for hour in default_hours
-        ]
-
         await self.update_user_notifications(
             telegram_id=telegram_id,
-            notifications=default_notifications,
+            hours=["08", "13", "18"],
         )
 
     async def get_notifiable_users_ids(
             self,
             hours: str,
             language_code: str = None
-    ) -> List[int]:
+    ) -> list[int]:
         stmt = select(UserLocal.telegram_id).join(
             UserNotification, UserNotification.telegram_id == UserLocal.telegram_id
         ).where(

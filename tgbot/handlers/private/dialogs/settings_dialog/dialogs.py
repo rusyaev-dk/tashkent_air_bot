@@ -5,8 +5,8 @@ from aiogram_dialog.widgets.text import Format, Const
 from tgbot.handlers.private.dialogs.settings_dialog.getters import overall_settings_getter, change_language_getter, \
     change_notifications_getter, notification_id_getter
 from tgbot.handlers.private.dialogs.settings_dialog.callable import switch_user_notifications, change_user_language, \
-    close_settings, change_user_notification_time, save_user_notification_settings, cancel_notification_setting, \
-    deselect_all_user_notifications
+    close_settings, select_notification, save_selected_notifications, cancel_notification_setting, \
+    deselect_all_notifications
 from tgbot.misc.constants import SET_USER_LANGUAGE_TEXT
 from tgbot.misc.states import SettingsSG
 
@@ -14,22 +14,22 @@ overall_settings_window = Window(
     Format("{choose_option_text}"),
     Button(
         text=Format("{notification_btn_text}"),
-        id="notifications_button",
+        id="btn_toggle_notifications",
         on_click=switch_user_notifications
     ),
     SwitchTo(
         text=Format("{set_notif_time_btn_text}"),
-        id="go_notif_setting_dialog",
+        id="btn_go_to_set_notification_time",
         state=SettingsSG.change_notification_time
     ),
     SwitchTo(
         text=Format("{change_language_btn_text}"),
-        id="change_language",
+        id="btn_go_to_change_language",
         state=SettingsSG.change_language
     ),
     Button(
         text=Format("{close_btn_text}"),
-        id="close_settings",
+        id="btn_close_settings",
         on_click=close_settings
     ),
     getter=overall_settings_getter,
@@ -41,31 +41,31 @@ change_user_notifications_window = Window(
     Group(
         Select(
             text=Format("{item[btn_text]}"),
-            items="notification_objects",
+            items="notifications",
             item_id_getter=notification_id_getter,
-            id="select_notif_button",
-            on_click=change_user_notification_time
+            id="btn_select_notification",
+            on_click=select_notification
         ),
         width=3
     ),
     Row(
         SwitchTo(
             text=Format("{save_btn_text}"),
-            id="save_chosen_notifications",
-            when="made_changes",
-            on_click=save_user_notification_settings,
+            id="btn_save_selected_notifications",
+            when="has_changes",
+            on_click=save_selected_notifications,
             state=SettingsSG.overall_settings
         ),
         Button(
             text=Format("{deselect_all_btn_text}"),
-            id="deselect_all_notifications",
+            id="btn_deselect_all_notifications",
             when="chosen_more_one",
-            on_click=deselect_all_user_notifications
+            on_click=deselect_all_notifications
         )
     ),
     SwitchTo(
         text=Format("{back_btn_text}"),
-        id='cancel_notification_setting',
+        id="btn_cancel_notification_setting",
         on_click=cancel_notification_setting,
         state=SettingsSG.overall_settings
     ),
@@ -78,23 +78,23 @@ change_user_language_window = Window(
     Row(
         Button(
             text=Const("🇷🇺 Русский"),
-            id='ru_language',
+            id="btn_set_language_ru",
             on_click=change_user_language
         ),
         Button(
             text=Const("🇺🇿 O'zbek"),
-            id='uz_language',
+            id="btn_set_language_uz",
             on_click=change_user_language
         )
     ),
     Button(
         text=Const("🇬🇧 English"),
-        id='en_language',
+        id="btn_set_language_en",
         on_click=change_user_language
     ),
     SwitchTo(
         text=Format("{back_btn_text}"),
-        id='cancel_language_setting',
+        id="btn_cancel_language_setting",
         state=SettingsSG.overall_settings
     ),
     getter=change_language_getter,
