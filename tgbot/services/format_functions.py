@@ -8,18 +8,19 @@ from tgbot.misc.constants import pollution_levels_emoji
 
 def format_aqi_info(
         aqi: AQI,
-        l10n: Translator
+        l10n: Translator,
+        locale: str = None
 ) -> str:
     key = int(aqi.pm25 // 50)
     key = key if key <= 5 else 5
 
-    pollution_level = l10n.get_text(key=f"pollution-level-{key}")
+    pollution_level = l10n.get_text(key=f"pollution-level-{key}", locale=locale)
     pollution_level_emoji = pollution_levels_emoji[key]
-    health_implications = l10n.get_text(key=f"health-implications-{key}")
+    health_implications = l10n.get_text(key=f"health-implications-{key}", locale=locale)
 
     date = aqi.date.strftime('%d').lstrip('0')
     month_number = int(aqi.date.strftime('%m')) - 1
-    month = l10n.get_text(key=f"month-full-{month_number}")
+    month = l10n.get_text(key=f"month-full-{month_number}", locale=locale)
     time = aqi.date.strftime('%H:%M')
 
     args = {
@@ -34,7 +35,7 @@ def format_aqi_info(
         "month": month,
         "time": time
     }
-    text = l10n.get_text(key="current-aqi", args=args)
+    text = l10n.get_text(key="current-aqi", args=args, locale=locale)
 
     return text
 

@@ -92,17 +92,17 @@ async def setup_scheduler(
     if 0 < now.minute < 59:
         first_run_time = now.replace(second=30, microsecond=0, minute=59, hour=now.hour)
 
-    scheduler.add_job(
-        func=AQIScheduler.notify_users, trigger="interval", hours=1,
-        replace_existing=True, start_date=first_run_time,
-        args=(bot, di_container,)
-    )
-
     # scheduler.add_job(
-    #     func=AQIScheduler.notify_users, trigger='interval',
-    #     seconds=5, replace_existing=True,
+    #     func=AQIScheduler.notify_users, trigger="interval", hours=1,
+    #     replace_existing=True, start_date=first_run_time,
     #     args=(bot, di_container,)
     # )
+
+    scheduler.add_job(
+        func=AQIScheduler.notify_users, trigger='interval',
+        seconds=5, replace_existing=True,
+        args=(bot, di_container,)
+    )
 
 
 async def establish_db(di_container: AsyncContainer):

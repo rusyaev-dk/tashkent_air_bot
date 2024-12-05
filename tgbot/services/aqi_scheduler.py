@@ -31,7 +31,6 @@ class AQIScheduler:
             l10n = await request_container.get(Translator)
 
             aqi = await aqi_repo.get_aqi()
-
             if not aqi:
                 return
 
@@ -45,38 +44,25 @@ class AQIScheduler:
 
             hours = hours.zfill(2)
 
-            ru_users_ids = await users_repo.get_notifiable_users_ids(language_code="ru", hours=hours)
-            uz_users_ids = await users_repo.get_notifiable_users_ids(language_code="uz", hours=hours)
-            en_users_ids = await users_repo.get_notifiable_users_ids(language_code="en", hours=hours)
+            notifiable_users = {}
+            for locale in l10n.locales:
+                notifiable_users[locale] = await users_repo.get_notifiable_users_ids(
+                    language_code=locale,
+                    hours=hours
+                )
 
-            if not len(ru_users_ids) and not len(uz_users_ids) and not len(en_users_ids):
+            if all(not len(notifiable_users[locale]) for locale in l10n.locales):
                 return
 
-            count = 0
-
             try:
-                ru_text = format_aqi_info(aqi=aqi, l10n=l10n.l10ns.get("ru"))
-                for user_id in ru_users_ids:
-                    success = await send_text(bot=bot, user_id=user_id, text=ru_text, disable_notification=True)
-                    if not success[0] and success[1] == "bot_blocked":
-                        await users_repo.update_user(UserLocal.telegram_id == user_id, is_active=False)
-                    count += 1
-                    await asyncio.sleep(0.05)
-
-                uz_text = format_aqi_info(aqi=aqi, l10n=l10n.l10ns.get("uz"))
-                for user_id in uz_users_ids:
-                    success = await send_text(bot=bot, user_id=user_id, text=uz_text, disable_notification=True)
-                    if not success[0] and success[1] == "bot_blocked":
-                        await users_repo.update_user(UserLocal.telegram_id == user_id, is_active=False)
-                    count += 1
-                    await asyncio.sleep(0.05)
-
-                en_text = format_aqi_info(aqi=aqi, l10n=l10n.l10ns.get("en"))
-                for user_id in en_users_ids:
-                    success = await send_text(bot=bot, user_id=user_id, text=en_text, disable_notification=True)
-                    if not success[0] and success[1] == "bot_blocked":
-                        await users_repo.update_user(UserLocal.telegram_id == user_id, is_active=False)
-                    count += 1
-                    await asyncio.sleep(0.05)
+                c = 0
+                for locale in l10n.locales:
+                    text = format_aqi_info(aqi=aqi, l10n=l10n, locale=locale)
+                    for user_id in notifiable_users[locale]:
+                        success = await send_text(bot=bot, user_id=user_id, text=text, disable_notification=True)
+                        if not success[0] and success[1] == "bot_blocked":
+                            await users_repo.update_user(UserLocal.telegram_id == user_id, is_active=False)
+                        c += 1
+                        await asyncio.sleep(0.05)
             finally:
-                logging.info(f"{count} messages successful sent.")
+                logging.info(f"{c} messages successful sent.")

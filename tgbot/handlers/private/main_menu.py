@@ -9,13 +9,14 @@ from infrastructure.database.repositories.aqi_repo import AQIRepository
 from l10n.translator import Translator
 from tgbot.keyboards.inline import WeekAqiForecastFactory
 from tgbot.keyboards.reply import feedback_kb
+from tgbot.misc.constants import AQI_BUTTONS, ADD_INFO_BUTTONS, SETTINGS_BUTTONS, FEEDBACK_BUTTONS
 from tgbot.misc.states import FeedbackSG, SettingsSG
 from tgbot.services.format_functions import format_aqi_info, format_reference_text
 
 menu_router = Router()
 
 
-@menu_router.message(F.text.in_(["Качество воздуха", "Air quality", "Havo sifati"]))
+@menu_router.message(F.text.in_(AQI_BUTTONS))
 @flags.rate_limit(key="default")
 @inject
 async def get_aqi(
@@ -51,7 +52,7 @@ async def get_aqi_forecast(
     pass
 
 
-@menu_router.message(F.text.in_(["ℹ️ Полезно", "ℹ️ Informative", "ℹ️ Ma'lumot beruvchi"]))
+@menu_router.message(F.text.in_(ADD_INFO_BUTTONS))
 @flags.rate_limit(key="default")
 @inject
 async def get_reference(
@@ -64,7 +65,7 @@ async def get_reference(
     await message.answer(text, disable_web_page_preview=True)
 
 
-@menu_router.message(F.text.in_(["🔧 Настройки", "🔧 Settings", "🔧 Sozlamalar"]))
+@menu_router.message(F.text.in_(SETTINGS_BUTTONS))
 @flags.rate_limit(key="default")
 async def settings(
         message: Message,
@@ -76,7 +77,7 @@ async def settings(
     )
 
 
-@menu_router.message(F.text.in_(["📩 Обратная связь", "📩 Feedback", "📩 Fikr-mulohaza"]))
+@menu_router.message(F.text.in_(FEEDBACK_BUTTONS))
 @flags.rate_limit(key="default")
 @inject
 async def feedback(

@@ -12,12 +12,13 @@ from tgbot.config import Config
 from tgbot.filters.admin import AdminFilter
 from tgbot.keyboards.inline import answer_to_user_kb, FeedbackFactory
 from tgbot.keyboards.reply import main_menu_kb
+from tgbot.misc.constants import CANCEL_BUTTONS
 from tgbot.misc.states import FeedbackSG
 
 feedback_router = Router()
 
 
-@feedback_router.message(FeedbackSG.get_feedback, F.text.in_(["❌ Отмена", "❌ Cancel", "❌ Bekor qilish"]))
+@feedback_router.message(FeedbackSG.get_feedback, F.text.in_(CANCEL_BUTTONS))
 @inject
 async def cancel_feedback(
         message: Message,
@@ -98,7 +99,7 @@ async def get_answer_text(
     await message.answer("✅ Сообщение доставлено.")
 
 
-@feedback_router.message(AdminFilter())
+@feedback_router.message(AdminFilter(), FeedbackSG.get_answer_to_user)
 @flags.rate_limit(key="default")
 async def incorrect_answer_message(
         message: Message,

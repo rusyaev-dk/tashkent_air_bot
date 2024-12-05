@@ -14,6 +14,7 @@ class Translator:
         self.locales = locales
         self.resource_ids = resource_ids
         self.default_locale = default_locale
+        self.__cur_locale = default_locale
 
         self.l10ns = {
             locale: FluentLocalization(
@@ -24,22 +25,11 @@ class Translator:
             for locale in locales
         }
 
-        self.cur_translator = self.l10ns.get(default_locale)
-
-    def get_text(self, key: str, args: Dict[str, Any] = None) -> str:
-        """
-        Retrieves localized text for a given key and optional arguments.
-
-        Args:
-            key (str): The key identifying the localized message.
-            args (Dict[str, Any], optional): Dictionary of arguments for message interpolation. Defaults to None.
-
-        Returns:
-            str: The localized string corresponding to the key and arguments.
-        """
-
-        return self.cur_translator.format_value(msg_id=key, args=args)
+    def get_text(self, key: str, args: Dict[str, Any] = None, locale: str = None) -> str:
+        if locale:
+            return self.l10ns[locale].format_value(msg_id=key, args=args)
+        return self.l10ns[self.__cur_locale].format_value(msg_id=key, args=args)
 
     def change_locale(self, new_locale: str):
         if new_locale in self.l10ns:
-            self.cur_translator = self.l10ns[new_locale]
+            self.__cur_locale = new_locale
