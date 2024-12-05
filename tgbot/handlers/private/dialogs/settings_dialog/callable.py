@@ -65,21 +65,21 @@ async def select_notification(
 ):
     selected_hour = notification_id[:2]
 
-    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications")
+    selected_hours: list[str] = dialog_manager.dialog_data.get("selected_hours")
     initial_hours: set = await users_repo.get_user_notification_hours(telegram_id=call.from_user.id)
 
-    if selected_hour in selected_notifications:
-        selected_notifications.remove(selected_hour)
+    if selected_hour in selected_hours:
+        selected_hours.remove(selected_hour)
     else:
-        selected_notifications.add(selected_hour)
+        selected_hours.append(selected_hour)
 
     has_changes = False
-    if selected_notifications != initial_hours:
+    if set(selected_hours) != initial_hours:
         has_changes = True
 
     dialog_manager.dialog_data.update(
         has_changes=has_changes,
-        selected_notifications=selected_notifications
+        selected_notifications=selected_hours
     )
 
 
@@ -90,20 +90,20 @@ async def select_all_notifications(
         dialog_manager: DialogManager,
         users_repo: FromDishka[UsersRepository]
 ):
-    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications")
+    selected_hours: list[str] = dialog_manager.dialog_data.get("selected_hours")
     initial_hours: set = await users_repo.get_user_notification_hours(telegram_id=call.from_user.id)
 
     for hour in range(7, 24):
         hour = str(hour).zfill(2)
-        selected_notifications.add(hour)
+        selected_hours.append(hour)
 
     has_changes = False
-    if selected_notifications != initial_hours:
+    if set(selected_hours) != initial_hours:
         has_changes = True
 
     dialog_manager.dialog_data.update(
         has_changes=has_changes,
-        selected_notifications=selected_notifications
+        selected_hours=selected_hours
     )
 
 
@@ -114,14 +114,11 @@ async def deselect_all_notifications(
         dialog_manager: DialogManager,
         users_repo: FromDishka[UsersRepository]
 ):
-    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications")
     initial_hours: set = await users_repo.get_user_notification_hours(telegram_id=call.from_user.id)
-
-    selected_notifications.clear()
 
     dialog_manager.dialog_data.update(
         has_changes=len(initial_hours) > 0,
-        selected_notifications=selected_notifications
+        selected_hours=[]
     )
 
 
@@ -133,10 +130,10 @@ async def save_selected_notifications(
         users_repo: FromDishka[UsersRepository],
         l10n: FromDishka[Translator]
 ):
-    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications")
+    selected_hours: list[str] = dialog_manager.dialog_data.get("selected_hours")
     await users_repo.update_user_notifications(
         telegram_id=call.from_user.id,
-        hours=list(selected_notifications)
+        hours=selected_hours
     )
     await call.answer(l10n.get_text(key='settings-applied'), show_alert=False)
     dialog_manager.dialog_data.clear()

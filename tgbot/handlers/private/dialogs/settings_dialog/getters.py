@@ -42,25 +42,25 @@ async def change_notifications_getter(
         **kwargs
 ):
     user: AIOGRAMuser = dialog_manager.event.from_user
-    selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications", set())
+    selected_hours: list[str] = dialog_manager.dialog_data.get("selected_hours", [])
     has_changes: bool = dialog_manager.dialog_data.get("has_changes")
 
     initial_hours: set = await users_repo.get_user_notification_hours(telegram_id=user.id)
 
-    if len(selected_notifications) == 0 and not has_changes:
+    if len(selected_hours) == 0 and not has_changes:
         for hour in initial_hours:
-            selected_notifications.add(hour)
+            selected_hours.append(hour)
 
         dialog_manager.dialog_data.update(
             made_changes_flag=False,
-            selected_notifications=selected_notifications
+            selected_hours=selected_hours
         )
 
     notifications: list[dict] = []
     for hour in range(7, 24):  # keyboard buttons generating
         hour = str(hour).zfill(2)  # Add a leading zero if the hour is single-digit
 
-        activated = hour in selected_notifications is not None
+        activated = hour in selected_hours
         notifications.append(
             {
                 "hour": hour,
@@ -72,8 +72,8 @@ async def change_notifications_getter(
     data = {
         "notifications": notifications,
         "has_changes": has_changes,
-        "selected_more_one": len(selected_notifications) > 1,
-        "selected_not_all": len(selected_notifications) < 17,
+        "selected_more_one": len(selected_hours) > 1,
+        "selected_not_all": len(selected_hours) < 17,
         "select_notif_time_text": l10n.get_text(key='select-notification-time'),
         "save_btn_text": l10n.get_text(key='save-btn'),
         "deselect_all_btn_text": l10n.get_text(key='deselect-all-notifications-btn'),
