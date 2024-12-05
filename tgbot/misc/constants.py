@@ -1,8 +1,8 @@
 
-SCHEDULER_AQI_INTERVAL_MINUTES = 4
+SCHEDULER_AQI_INTERVAL_MINUTES = 10
 DEFAULT_THROTTLE_TIME = 1
 
-SUPPORT_USERNAME = "@botik_support"
+SUPPORT_USERNAME = "@rusyaevdk"
 
 SET_USER_LANGUAGE_TEXT = "🇷🇺 Выберите язык\n🇺🇿 Tilni tanlang\n🇬🇧 Choose language"
 

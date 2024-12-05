@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime, timedelta
 
 from aiogram import Bot
 from dishka import AsyncContainer
@@ -8,7 +9,6 @@ from infrastructure.database.repositories.aqi_repo import AQIRepository
 from infrastructure.database.models import UserLocal
 from infrastructure.database.repositories.users_repo import UsersRepository
 
-from datetime import datetime
 import pytz
 
 from l10n.translator import Translator
@@ -66,3 +66,21 @@ class AQIScheduler:
                         await asyncio.sleep(0.05)
             finally:
                 logging.info(f"{c} messages successful sent.")
+
+    @staticmethod
+    def get_update_first_run_time(now: datetime = datetime.now()) -> datetime:
+        next_minute = (now.minute // 10 + 1) * 10
+
+        if next_minute == 60:
+            next_time = now + timedelta(hours=1)  # Go to the next hour
+            next_time = next_time.replace(minute=0, second=0, microsecond=0)
+        else:
+            next_time = now.replace(minute=next_minute, second=0, microsecond=0)
+
+        return next_time
+
+    @staticmethod
+    def get_notify_first_run_time(now: datetime = datetime.now()) -> datetime:
+        if now.minute <= 59:
+            return now.replace(minute=59, second=0, microsecond=0)
+        return now.replace(minute=59, second=0, microsecond=0) + timedelta(hours=1)

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from datetime import datetime
 
 import betterlogging as bl
 from aiogram import Bot, Dispatcher
@@ -25,7 +24,6 @@ from tgbot.middlewares.throttling import ThrottlingMiddleware
 from tgbot.misc.constants import DEFAULT_THROTTLE_TIME, SCHEDULER_AQI_INTERVAL_MINUTES
 from tgbot.services import broadcaster
 from tgbot.services.aqi_scheduler import AQIScheduler
-from tgbot.services.micro_functions import get_correct_update_run_time
 from tgbot.services.setup_bot_commands import setup_admin_commands
 from dishka.integrations.aiogram import setup_dishka
 
@@ -73,29 +71,25 @@ async def setup_scheduler(
     scheduler = await di_container.get(AsyncIOScheduler)
     scheduler.start()
 
-    now = datetime.now()
-    update_run_time = get_correct_update_run_time(now=now)
-    # scheduler.add_job(
-    #     func=AQIScheduler.update_aqi, trigger='interval',
-    #     minutes=SCHEDULER_AQI_INTERVAL_MINUTES, replace_existing=True,
-    #     start_date=update_run_time,
-    #     args=(di_container,)
-    # )
+    update_run_time = AQIScheduler.get_update_first_run_time()
+    scheduler.add_job(
+        func=AQIScheduler.update_aqi, trigger='interval',
+        minutes=SCHEDULER_AQI_INTERVAL_MINUTES, replace_existing=True,
+        start_date=update_run_time,
+        args=(di_container,)
+    )
+
+    notify_run_time = AQIScheduler.get_notify_first_run_time()
+    scheduler.add_job(
+        func=AQIScheduler.notify_users, trigger="interval", hours=1,
+        replace_existing=True, start_date=notify_run_time,
+        args=(bot, di_container,)
+    )
 
     # scheduler.add_job(
     #     func=AQIScheduler.update_aqi, trigger='interval',
     #     seconds=5, replace_existing=True,
     #     args=(di_container,)
-    # )
-
-    first_run_time = None
-    if 0 < now.minute < 59:
-        first_run_time = now.replace(second=30, microsecond=0, minute=59, hour=now.hour)
-
-    # scheduler.add_job(
-    #     func=AQIScheduler.notify_users, trigger="interval", hours=1,
-    #     replace_existing=True, start_date=first_run_time,
-    #     args=(bot, di_container,)
     # )
 
     # scheduler.add_job(
