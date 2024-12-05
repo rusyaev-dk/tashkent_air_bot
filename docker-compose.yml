@@ -2,6 +2,7 @@ version: '3.3'
 
 services:
   bot:
+    container_name: "aqi_tgbot"
     image: "bot"
     stop_signal: SIGINT
     build:
@@ -21,7 +22,8 @@ services:
         max-file: "10"
 
   pg_database:
-    image: postgres:13-alpine
+    container_name: "postgres17"
+    image: postgres:17-alpine
     ports:
       - "5439:5432" # Change if you like! 5439 is external to container
     restart: always
@@ -42,6 +44,7 @@ services:
         max-file: "10"
 
   redis_cache:
+    container_name: "redis_cache"
     image: redis:6.2-alpine
     restart: always
     command: redis-server --port $REDIS_PORT --save 20 1 --loglevel warning --requirepass $REDIS_PASSWORD
