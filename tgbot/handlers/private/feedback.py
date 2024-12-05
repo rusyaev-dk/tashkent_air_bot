@@ -77,7 +77,7 @@ async def answer_to_user(
     await state.update_data(data=data)
 
 
-@feedback_router.message(AdminFilter(), FeedbackSG.get_answer_to_user)
+@feedback_router.message(AdminFilter(), F.text, FeedbackSG.get_answer_to_user)
 @inject
 async def get_answer_text(
         message: Message,
@@ -93,6 +93,14 @@ async def get_answer_text(
         await message.bot.send_message(chat_id=user_id, text=text,
                                        reply_to_message_id=msg_to_reply_id)
     except TelegramForbiddenError:
-        await message.answer("❌ Сообщение не доставлено, т.к. пользователь заблокировал бота.")
+        await message.answer("❌ Сообщение не доставлено: пользователь заблокировал бота.")
         return
     await message.answer("✅ Сообщение доставлено.")
+
+
+@feedback_router.message(AdminFilter())
+@flags.rate_limit(key="default")
+async def incorrect_answer_message(
+        message: Message,
+):
+    await message.answer("❗️ Пожалуйста, отправьте текст.")
