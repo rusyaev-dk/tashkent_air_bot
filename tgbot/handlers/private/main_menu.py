@@ -15,7 +15,7 @@ from tgbot.services.format_functions import format_aqi_info, format_reference_te
 menu_router = Router()
 
 
-@menu_router.message(F.text.in_(["Индекс качества воздуха", "Air quality index", "Havo sifati indeksi"]))
+@menu_router.message(F.text.in_(["Качество воздуха", "Air quality", "Havo sifati"]))
 @flags.rate_limit(key="default")
 @inject
 async def get_aqi(

@@ -1,5 +1,5 @@
 
-current-aqi-btn = Air quality index
+current-aqi-btn = Air quality
 
 reference-btn = ℹ️ Informative
 

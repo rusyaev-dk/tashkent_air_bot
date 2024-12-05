@@ -1,5 +1,5 @@
 
-current-aqi-btn = Havo sifati indeksi
+current-aqi-btn = Havo sifati
 
 reference-btn = ℹ️ Ma'lumot beruvchi
 

@@ -1,5 +1,5 @@
 
-current-aqi-btn = Индекс качества воздуха
+current-aqi-btn = Качество воздуха
 
 reference-btn = ℹ️ Полезно
 

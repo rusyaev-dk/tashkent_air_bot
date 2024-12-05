@@ -65,3 +65,5 @@ cache/
 
 *.db
 *.db-journal
+alembic/
+alembic.ini

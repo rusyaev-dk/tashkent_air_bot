@@ -14,6 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from di.di import setup_dependencies
+from infrastructure.api.clients.http_client import HttpClient
 from infrastructure.database.models import Base
 from infrastructure.database.repositories.users_repo import UsersRepository
 from tgbot.config import Config
@@ -131,6 +132,7 @@ async def main():
     setup_logging()
 
     container = await setup_dependencies()
+    http_client: HttpClient = await container.get(HttpClient)
     config = await container.get(Config)
     await establish_db(di_container=container)
 
@@ -157,6 +159,7 @@ async def main():
     except (KeyboardInterrupt, SystemExit):
         logging.error("Stopping bot...")
     finally:
+        await http_client.close()
         await container.close()
         await bot.session.close()
 
