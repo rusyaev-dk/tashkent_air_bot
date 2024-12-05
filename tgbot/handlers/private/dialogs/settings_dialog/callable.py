@@ -83,19 +83,26 @@ async def select_notification(
     )
 
 
+@inject
 async def select_all_notifications(
         call: CallbackQuery,
         button: Button,
-        dialog_manager: DialogManager
+        dialog_manager: DialogManager,
+        users_repo: FromDishka[UsersRepository]
 ):
     selected_notifications: set = dialog_manager.dialog_data.get("selected_notifications")
+    initial_hours: set = await users_repo.get_user_notification_hours(telegram_id=call.from_user.id)
 
     for hour in range(7, 24):
         hour = str(hour).zfill(2)
         selected_notifications.add(hour)
 
+    has_changes = False
+    if selected_notifications != initial_hours:
+        has_changes = True
+
     dialog_manager.dialog_data.update(
-        has_changes=True,
+        has_changes=has_changes,
         selected_notifications=selected_notifications
     )
 

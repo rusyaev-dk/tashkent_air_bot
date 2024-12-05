@@ -24,7 +24,7 @@ class AQIScheduler:
             await aqi_repo.update_aqi()
 
     @staticmethod
-    async def send_aqi_to_users(bot: Bot, di_container: AsyncContainer):
+    async def notify_users(bot: Bot, di_container: AsyncContainer):
         async with di_container() as request_container:
             aqi_repo = await request_container.get(AQIRepository)
             users_repo = await request_container.get(UsersRepository)
