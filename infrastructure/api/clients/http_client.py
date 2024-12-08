@@ -4,7 +4,7 @@ import aiohttp
 class HttpClient:
     def __init__(self):
         """
-        Инициализация HTTP клиента с сессией aiohttp.
+        Initializing an HTTP client with an aiohttp session.
         """
         self.__session = aiohttp.ClientSession()
 
