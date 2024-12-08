@@ -57,7 +57,7 @@ async def change_notifications_getter(
         )
 
     notifications: list[dict] = []
-    for hour in range(7, 24):  # keyboard buttons generating
+    for hour in range(7, 24):  # Keyboard buttons generating
         hour = str(hour).zfill(2)  # Add a leading zero if the hour is single-digit
 
         activated = hour in selected_hours

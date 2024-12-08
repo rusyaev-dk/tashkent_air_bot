@@ -11,7 +11,7 @@ def format_aqi_info(
         l10n: Translator,
         locale: str = None
 ) -> str:
-    key = int(aqi.pm25 // 50)
+    key = int(aqi.aqi // 50)
     key = key if key <= 5 else 5
 
     pollution_level = l10n.get_text(key=f"pollution-level-{key}", locale=locale)

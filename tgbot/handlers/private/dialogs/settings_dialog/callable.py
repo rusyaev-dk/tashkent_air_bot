@@ -90,9 +90,9 @@ async def select_all_notifications(
         dialog_manager: DialogManager,
         users_repo: FromDishka[UsersRepository]
 ):
-    selected_hours: list[str] = dialog_manager.dialog_data.get("selected_hours")
     initial_hours: set = await users_repo.get_user_notification_hours(telegram_id=call.from_user.id)
 
+    selected_hours = []
     for hour in range(7, 24):
         hour = str(hour).zfill(2)
         selected_hours.append(hour)
