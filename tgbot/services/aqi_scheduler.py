@@ -69,18 +69,15 @@ class AQIScheduler:
 
     @staticmethod
     def get_update_first_run_time(now: datetime = datetime.now()) -> datetime:
-        next_minute = (now.minute // 10 + 1) * 10
+        next_minute = (now.minute // 5 + 1) * 5
 
         if next_minute == 60:
-            next_time = now + timedelta(hours=1)  # Go to the next hour
-            next_time = next_time.replace(minute=0, second=0, microsecond=0)
+            return now.replace(minute=4, second=30, microsecond=0) + timedelta(hours=1)
         else:
             next_time = now.replace(minute=next_minute, second=0, microsecond=0)
-
-        return next_time
+            next_time -= timedelta(seconds=30)
+            return next_time
 
     @staticmethod
     def get_notify_first_run_time(now: datetime = datetime.now()) -> datetime:
-        if now.minute <= 59:
-            return now.replace(minute=59, second=0, microsecond=0)
-        return now.replace(minute=59, second=0, microsecond=0) + timedelta(hours=1)
+        return now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)

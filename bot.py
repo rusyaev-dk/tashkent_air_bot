@@ -21,7 +21,7 @@ from tgbot.handlers import routers_list
 from tgbot.middlewares.database import UserExistingMiddleware
 from tgbot.middlewares.l10n import L10nMiddleware
 from tgbot.middlewares.throttling import ThrottlingMiddleware
-from tgbot.misc.constants import DEFAULT_THROTTLE_TIME, SCHEDULER_AQI_INTERVAL_MINUTES
+from tgbot.misc.constants import DEFAULT_THROTTLE_TIME
 from tgbot.services import broadcaster
 from tgbot.services.aqi_scheduler import AQIScheduler
 from tgbot.services.setup_bot_commands import setup_admin_commands
@@ -74,7 +74,7 @@ async def setup_scheduler(
     update_run_time = AQIScheduler.get_update_first_run_time()
     scheduler.add_job(
         func=AQIScheduler.update_aqi, trigger='interval',
-        minutes=SCHEDULER_AQI_INTERVAL_MINUTES, replace_existing=True,
+        minutes=5, replace_existing=True,
         start_date=update_run_time,
         args=(di_container,)
     )
