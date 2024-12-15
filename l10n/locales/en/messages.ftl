@@ -10,7 +10,7 @@ hello-info = 📌 In the <b>"Settings"</b> section you can change the language a
 
 terms-of-use = 📑 By using the bot, you automatically accept the { $terms_of_use }.
 terms-of-use-name = user agreement
-terms-of-use-link = https://telegra.ph/USER-AGREEMENT-FOR-Tashkent-Air-BOT-02-01
+terms-of-use-link = https://telegra.ph/USER-AGREEMENT-FOR-Tashkent-Air-BOT-12-15
 
 help =
      🛠 If something went wrong, click <b>/start</b> to restart the bot.

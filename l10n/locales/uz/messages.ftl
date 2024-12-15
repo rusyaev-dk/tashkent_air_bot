@@ -10,7 +10,7 @@ hello-info = 📌 <b>«Sozlamalar»</b> bo'limida siz tilni o'zgartirishingiz, s
 
 terms-of-use = 📑 Botdan foydalanish orqali siz { $terms_of_use} avtomatik ravishda qabul qilasiz.
 terms-of-use-name = foydalanuvchi shartnomasini
-terms-of-use-link = https://telegra.ph/Toshkent-Air-BOT-UCHUN-FOYDALANUVCHI-SHARTNOMASI-02-01
+terms-of-use-link = https://telegra.ph/Toshkent-Air-BOT-UCHUN-FOYDALANUVCHI-SHARTNOMASI-12-15
 
 help =
      🛠 Agar biror narsa noto'g'ri bo'lsa, botni qayta ishga tushirish uchun <b>/start</b> tugmasini bosing.

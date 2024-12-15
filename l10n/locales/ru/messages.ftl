@@ -10,7 +10,7 @@ hello-info = 📌 В разделе <b>«Настройки»</b> Вы може�
 
 terms-of-use = 📑 Пользуясь ботом, Вы автоматически принимаете { $terms_of_use }.
 terms-of-use-name = пользовательское соглашение
-terms-of-use-link = https://telegra.ph/POLZOVATELSKOE-SOGLASHENIE-DLYA-BOTA-Tashkent-Air-01-31-2
+terms-of-use-link = https://telegra.ph/POLZOVATELSKOE-SOGLASHENIE-DLYA-BOTA-Tashkent-Air-12-15
 
 help =
     🛠 Если что-то пошло не так, нажмите <b>/start</b>, чтобы перезапустить бота.
