@@ -62,6 +62,14 @@ class UsersRepository:
         result = await self.__session.scalar(stmt)
         return result or 0
 
+    async def get_users_count_by_language(self, language_code: str) -> int:
+        stmt = select(func.count(
+            and_(UserLocal.language_code == language_code,
+                 UserLocal.is_active == True)
+        ))
+        result = await self.__session.scalar(stmt)
+        return result or 0
+
     async def update_user(
             self,
             *clauses,

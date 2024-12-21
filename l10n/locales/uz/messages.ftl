@@ -1,6 +1,6 @@
 
 hello =
-    Salom, { $name }!
+    Assalomu alaykum, { $name }!
 
     ℹ️ Axborotni taqdim etish va tahlil qilish uchun biz atmosferadagi turli zarrachalar kontsentratsiyasi asosida havoning ifloslanish darajasini baholaydigan Havo sifati indeksidan (<b>AQI</b>) foydalanamiz.
 
