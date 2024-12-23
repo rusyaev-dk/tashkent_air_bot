@@ -152,13 +152,18 @@ class Miscellaneous:
 @dataclass
 class ApiConfig:
 
-    api_token: str
+    owm_api_token: str
+    aqicn_api_token: str
 
     @staticmethod
     def from_env(env: Env):
-        api_token = env.str("API_TOKEN")
+        owm_api_token = env.str("OWM_API_TOKEN")
+        aqicn_api_token = env.str("AQICN_API_TOKEN")
 
-        return ApiConfig(api_token=api_token)
+        return ApiConfig(
+            owm_api_token=owm_api_token,
+            aqicn_api_token=aqicn_api_token
+        )
 
 
 @dataclass

@@ -8,6 +8,7 @@ backoff
 ujson
 yarl
 aiohttp~=3.10.11
+certifi
 
 # # For PostgreSQL sqlalchemy + alembic:
 sqlalchemy~=2.0

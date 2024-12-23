@@ -66,8 +66,10 @@ class ClientProvider(Provider):
     async def aqi_client(self, http_client: HttpClient, config: Config) -> AQIClient:
         return AQIClient(
             http_client=http_client,
-            base_url="http://api.openweathermap.org",
-            token=config.api.api_token
+            aqicn_base_url="https://api.waqi.info",
+            aqicn_token=config.api.aqicn_api_token,
+            owm_base_url="https://api.openweathermap.org",
+            owm_token=config.api.owm_api_token,
         )
 
 

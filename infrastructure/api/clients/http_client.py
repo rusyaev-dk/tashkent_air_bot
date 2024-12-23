@@ -1,4 +1,8 @@
+import ssl
+
 import aiohttp
+import certifi
+from aiohttp import TCPConnector
 
 
 class HttpClient:
@@ -6,7 +10,10 @@ class HttpClient:
         """
         Initializing an HTTP client with an aiohttp session.
         """
-        self.__session = aiohttp.ClientSession()
+
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        connector = TCPConnector(ssl=ssl_context)
+        self.__session = aiohttp.ClientSession(connector=connector)
 
     async def make_request(
             self,

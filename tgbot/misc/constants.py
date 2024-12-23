@@ -19,3 +19,5 @@ pollution_levels_emoji = {
         4: "🟤",
         5: "⚫️",
 }
+
+
