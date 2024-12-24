@@ -11,8 +11,7 @@ def format_aqi_info(
         l10n: Translator,
         locale: str = None
 ) -> str:
-    key = int(aqi.aqi // 50)
-    key = key if key <= 5 else 5
+    key = get_key(aqi.aqi)
 
     pollution_level = l10n.get_text(key=f"pollution-level-{key}", locale=locale)
     pollution_level_emoji = pollution_levels_emoji[key]
@@ -26,8 +25,6 @@ def format_aqi_info(
     args = {
         "aqi": int(aqi.aqi),
         "pm25": int(aqi.pm25),
-        "pm10": int(aqi.pm10),
-        "o3": str(round(aqi.o3, 1)),
         "pollution_level_emoji": pollution_level_emoji,
         "pollution_level": pollution_level,
         "health_implications": health_implications,
@@ -40,38 +37,19 @@ def format_aqi_info(
     return text
 
 
-# def format_forecast_aqi_info(
-#         forecast_list: list[ForecastAQI],
-#         l10n: LocalizedTranslator
-# ) -> str:
-#     header_text = l10n.get_text(key="forecast-aqi-header")
-#     text = f"{header_text}\n"
-#
-#     for forecast_aqi in forecast_list:
-#         key = int(forecast_aqi.pm25_forecast_value // 50)
-#         key = key if key <= 5 else 5
-#
-#         date = forecast_aqi.forecast_date.strftime('%d').lstrip('0')
-#         month_number = int(forecast_aqi.forecast_date.strftime('%m')) - 1
-#         month = l10n.get_text(key=f"month-full-{month_number}")
-#
-#         pollution_level = l10n.get_text(key=f"pollution-level-{key}")
-#         pollution_level_emoji = pollution_levels_emoji[key]
-#
-#         args = {
-#             "date": date,
-#             "month": month,
-#             "pm25_forecast_value": int(forecast_aqi.pm25_forecast_value),
-#             "pm10_forecast_value": int(forecast_aqi.pm10_forecast_value),
-#             "o3_forecast_value": str(round(forecast_aqi.o3_forecast_value, 1)),
-#             "pollution_level_emoji": pollution_level_emoji,
-#             "pollution_level": pollution_level
-#         }
-#
-#         forecast_text = l10n.get_text(key="forecast-aqi", args=args)
-#         text += f"\n{forecast_text}\n"
-#
-#     return text
+def get_key(aqi_value: int) -> int:
+    if 0 <= aqi_value <= 50:
+        return 0  # Загрязнение минимально
+    elif 51 <= aqi_value <= 100:
+        return 1  # Удовлетворительно
+    elif 101 <= aqi_value <= 150:
+        return 2  # Вредно для уязвимых групп
+    elif 151 <= aqi_value <= 200:
+        return 3  # Вредно
+    elif 201 <= aqi_value <= 300:
+        return 4  # Очень вредно
+    else:
+        return 5
 
 
 def format_reference_text(

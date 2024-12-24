@@ -45,9 +45,7 @@ current-aqi =
     <b>Havo sifati indeksi: { $aqi } </b>
 
     <b>Ifloslantiruvchi moddalar (μg/m3):</b>
-    - PM2.5: <b>{ $pm25 }</b>
-    - PM10: <b>{ $pm10 }</b>
-    - o3: <b>{ $o3 }</b>
+    - PM2.5: { $pm25 }
 
     ⏳ <b>Yangilangan: { $date } { $month }, { $time }</b>
 

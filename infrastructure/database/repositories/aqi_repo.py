@@ -78,6 +78,13 @@ class AQIRepository:
             return
 
         if aqicn_data and owm_data:
+            if abs(owm_data.aqi - aqicn_data.aqi) > 55:
+                if owm_data.aqi > aqicn_data.aqi:
+                    aqicn_data = None
+                else:
+                    owm_data = None
+
+        if aqicn_data and owm_data:
             aqi = (aqicn_data.aqi + owm_data.aqi) // 2
             pm25 = (aqicn_data.pm25 + owm_data.pm25) / 2
             pm10 = (aqicn_data.pm10 + owm_data.pm10) / 2
@@ -95,8 +102,12 @@ class AQIRepository:
             pm10 = owm_data.pm10
             o3 = owm_data.o3
             date = owm_data.date
-       
-        if await self.get_aqi():
+
+        cur_aqi = await self.get_aqi()
+        if cur_aqi is not None:
+            if date <= cur_aqi.date:
+                return
+
             stmt = update(AQILocal).values(
                 aqi=aqi,
                 pm25=pm25,
@@ -128,6 +139,8 @@ class AQIRepository:
         fixed_offset = pytz.FixedOffset(300)
         now = datetime.now(tz=fixed_offset)
 
+        station_data = []
+
         for station_id in self.__aqicn_stations:
             await asyncio.sleep(0.05)
             data = await self.__client.request_aqicn_data(station_id=station_id)
@@ -136,6 +149,9 @@ class AQIRepository:
 
             try:
                 aqi = data.get("aqi")
+                if not aqi or int(aqi) <= 0:
+                    continue
+
                 time_str = data.get("time", {}).get("s")
                 iaqi = data.get("iaqi", {})
 
@@ -143,34 +159,55 @@ class AQIRepository:
                 pm10 = float(iaqi.get("pm10", {}).get("v", 0)) if "pm10" in iaqi else None
                 o3 = float(iaqi.get("o3", {}).get("v", 0)) if "o3" in iaqi else None
 
+                date = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=fixed_offset)
+
+                # Пропускаем станцию, если данные устарели
+                if not date or (now - date > self.__time_threshold) or now < date:
+                    continue
+
+                station_data.append({
+                    "aqi": int(aqi),
+                    "pm25": pm25,
+                    "pm10": pm10,
+                    "o3": o3,
+                    "date": date
+                })
+
             except KeyError as e:
                 logging.error(f"KeyError for AQICN data: {e}")
-                return None
+                continue
             except Exception as e:
                 logging.error(f"Error for AQICN data: {e}")
-                return None
-
-            date = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=fixed_offset)
-
-            # Skipping station if data is older than time threshold
-            if not date or (now - date > self.__time_threshold) or now < date:
                 continue
 
-            if aqi is not None:
-                total_aqi += aqi
-            if pm25 is not None:
-                pm25 = AqiConverter.get_pm25_concentration(aqi=int(pm25))
+        if not station_data:
+            return None
+
+        # Находим максимум AQI среди станций
+        max_aqi = max(d["aqi"] for d in station_data)
+
+        # Оставляем только станции, где AQI >= max_aqi - 65
+        filtered_data = [d for d in station_data if d["aqi"] >= max_aqi - 165]
+        print(filtered_data)
+
+        if not filtered_data:
+            return None
+
+        for d in filtered_data:
+            total_aqi += d["aqi"]
+            if d["pm25"] is not None:
+                pm25 = AqiConverter.get_pm25_concentration(aqi=int(d["pm25"]))
                 total_pm25 += pm25
-            if pm10 is not None:
-                pm10 = AqiConverter.get_pm10_concentration(aqi=int(pm10))
+            if d["pm10"] is not None:
+                pm10 = AqiConverter.get_pm10_concentration(aqi=int(d["pm10"]))
                 total_pm10 += pm10
-            if o3 is not None:
-                o3 = AqiConverter.get_o3_concentration(aqi=int(o3))
+            if d["o3"] is not None:
+                o3 = AqiConverter.get_o3_concentration(aqi=int(d["o3"]))
                 total_o3 += o3
             count += 1
 
-            if date and (latest_date is None or date > latest_date):
-                latest_date = date
+            if d["date"] and (latest_date is None or d["date"] > latest_date):
+                latest_date = d["date"]
 
         if count == 0 or latest_date is None:
             return None
@@ -217,14 +254,12 @@ class AQIRepository:
 
     __aqicn_stations = [
         "@11219",
-        "A477607",
         "@14723",
         "A370516",
         "A486382",
-        "@14722",
         "A479296"
     ]
 
     __default_lat = 41.2646
     __default_lon = 69.2163
-    __time_threshold = timedelta(hours=1)
+    __time_threshold = timedelta(hours=2, minutes=1)
