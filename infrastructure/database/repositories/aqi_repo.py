@@ -78,7 +78,7 @@ class AQIRepository:
             return
 
         if aqicn_data and owm_data:
-            if abs(owm_data.aqi - aqicn_data.aqi) > 55:
+            if abs(owm_data.aqi - aqicn_data.aqi) > 20:
                 if owm_data.aqi > aqicn_data.aqi:
                     aqicn_data = None
                 else:
@@ -186,8 +186,8 @@ class AQIRepository:
         # Находим максимум AQI среди станций
         max_aqi = max(d["aqi"] for d in station_data)
 
-        # Оставляем только станции, где AQI >= max_aqi - 65
-        filtered_data = [d for d in station_data if d["aqi"] >= max_aqi - 165]
+        # Оставляем только станции, где AQI >= max_aqi - 35
+        filtered_data = [d for d in station_data if d["aqi"] >= max_aqi - 35]
         print(filtered_data)
 
         if not filtered_data:
